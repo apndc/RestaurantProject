@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from flask import Flask, render_template, request, redirect, url_for
 
 # load environment variables from .env
 load_dotenv()
@@ -35,7 +36,7 @@ def init_database():
     """Initialize database tables"""
     try:
         # import all of the tables
-        from db.schema import Users
+        from db.schema import Account, CardInfo, Events, Location, Reservation, RestaurantInfo
         
         # create all of the tables
         Base.metadata.create_all(bind=engine)

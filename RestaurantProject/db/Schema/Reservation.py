@@ -10,7 +10,7 @@ class Reservation(Base):
 
     #Foreign Keys
     UserID = Column(Integer, ForeignKey('Account.UserID'), nullable=False)
-    RID = Column(Integer, ForeignKey('RestuarntInfo.RID'), nullable=False)
+    RID = Column(Integer, ForeignKey('RestaurantInfo.RID'), nullable=False)
 
     #Other info in table 
     NumberOfGuests = Column(Integer)
