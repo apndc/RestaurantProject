@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 from db.server import Base
 
-class CradInfo(Base):
+class CardInfo(Base):
     __tablename__ ='CardInfo'
 
     #Primary Key
