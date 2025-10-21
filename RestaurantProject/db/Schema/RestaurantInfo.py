@@ -14,10 +14,15 @@ class RestaurantInfo(Base):
 
     #Other info in table 
     PhoneNumber = Column(String(10))
-    Cusine = Column(String(40))
+    Cuisine = Column(String(40))
     Capacity = Column(Integer)
     Fee = Column(Integer)
 
+    #Relationships
+    reservations = relationship("Reservation", back_populates="restaurant")
+    owner = relationship("Account", back_populates="restaurants", uselist=False)
+    location = relationship("Location", back_populates="restaurants", uselist=False)
+
     def __repr__(self):
-        return f""" Restuarnt ID: {self.RID}, User ID: {self.UserID}, Locaction ID: {self.LocationID}, Phone Number: {self.PhoneNumber}, 
-        Cusine: {self.Cusine}, Capacity: {self.Capacity}, Fee: {self.Fee}"""
+        return f""" Restuarnt ID: {self.RID}, User ID: {self.UserID}, Location ID: {self.LocationID}, Phone Number: {self.PhoneNumber}, 
+        Cuisine: {self.Cuisine}, Capacity: {self.Capacity}, Fee: {self.Fee}"""

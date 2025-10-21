@@ -17,6 +17,12 @@ class Account(Base):
     Role = Column(String(40))
     Password = Column(String(256))
 
+    #Relationships
+    reservations = relationship("Reservation", back_populates="user")
+    cards = relationship("CardInfo", back_populates="account")
+    location = relationship("Location", back_populates="accounts")
+    restaurants = relationship("RestaurantInfo", back_populates="owner")
+
 
     def __repr__(self):
         return f""" User ID: {self.UserID}, Email ID: {self.Email}, Phone Number ID: {self.PhoneNumber}, Role: {self.Role}, Password: {self.Password}, 
