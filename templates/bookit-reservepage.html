@@ -1,3 +1,4 @@
+<!-- templates/reservation.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -21,67 +22,53 @@
         <p><strong>Date:</strong> <!-- Insert dynamically --></p>
       </div>
 
-      <!-- Reservation Info Form -->
+      <!-- Reservation Form -->
       <div class="reservation-form">
         <h3>Reservation Info</h3>
-        <form id="reservationForm">
+        <form id="reservationForm" method="POST">
+          <!-- Guest Info -->
           <label for="name">Name</label>
-          <input type="text" id="name" name="name" placeholder="Enter your name">
+          <input type="text" id="name" name="name" placeholder="Enter your name" required>
 
           <label for="phone">Phone Number</label>
-          <input type="text" id="phone" name="phone" placeholder="Enter phone number">
+          <input type="text" id="phone" name="phone" placeholder="Enter phone number" required>
 
           <label for="email">Email</label>
-          <input type="email" id="email" name="email" placeholder="Enter email">
+          <input type="email" id="email" name="email" placeholder="Enter email" required>
 
           <label for="special">Special Occasion</label>
           <input type="text" id="special" name="special" placeholder="Birthday, Anniversary, etc.">
-        </form>
-      </div>
 
-      <!-- Reservation Review -->
-      <div class="reservation-review">
-        <p>Would you like to receive updates about your reservation?</p>
-        <button onclick="receiveUpdates('yes')">Yes/No</button>
-        <button onclick="receiveUpdates('email')">Email/Text</button>
+          <!-- Card Info -->
+          <h4>Card Details</h4>
+          <p>This restaurant requires a credit card to hold your booking</p>
 
-        <p>This restaurant requires a credit card to hold your booking</p>
-        <button onclick="saveCard()">Card Details</button>
-
-        <form id="cardForm">
           <label for="cardNumber">Card Number</label>
-          <input type="text" id="cardNumber" name="cardNumber" placeholder="XXXX-XXXX-XXXX-XXXX">
+          <input type="text" id="cardNumber" name="cardNumber" placeholder="XXXX-XXXX-XXXX-XXXX" required>
 
           <label for="nameOnCard">Name on Card</label>
-          <input type="text" id="nameOnCard" name="nameOnCard" placeholder="Full Name">
+          <input type="text" id="nameOnCard" name="nameOnCard" placeholder="Full Name" required>
 
           <label for="expDate">Exp Date</label>
-          <input type="text" id="expDate" name="expDate" placeholder="MM/YY">
+          <input type="text" id="expDate" name="expDate" placeholder="MM/YY" required>
 
           <label for="cvv">CVV</label>
-          <input type="text" id="cvv" name="cvv" placeholder="XXX">
-        </form>
+          <input type="text" id="cvv" name="cvv" placeholder="XXX" required>
 
-        <button onclick="submitReservation()">BookIT!</button>
+          <!-- Reservation Updates -->
+          <p>Would you like to receive updates about your reservation?</p>
+          <select name="updates" id="updates">
+            <option value="none">No</option>
+            <option value="email">Email</option>
+            <option value="text">Text</option>
+          </select>
+
+          <button type="submit">BookIT!</button>
+        </form>
       </div>
     </section>
   </main>
 
   <footer><a href="#">Report a Problem</a></footer>
-
-  <script>
-    function receiveUpdates(option) {
-      alert("You chose: " + option);
-    }
-
-    function saveCard() {
-      alert("Card info section active");
-    }
-
-    function submitReservation() {
-      alert("Reservation submitted!");
-      // Here you can integrate Flask form submission
-    }
-  </script>
 </body>
 </html>
