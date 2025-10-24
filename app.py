@@ -12,6 +12,11 @@ def home():
 def eventpage():
     return render_template('bookit-eventpage.html')
 
+# Restaurant Page
+@app.route('/restaurant')
+def restaurant():
+    return render_template('bookit-restaurant.html')
+
 # Reservation Page
 @app.route('/reservation', methods=['GET', 'POST'])
 def reservation():
