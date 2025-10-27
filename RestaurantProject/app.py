@@ -6,16 +6,16 @@ load_dotenv()
 app = Flask(__name__)
 
 # Home page: BookIt Welcome
-@app.route('/home')
-def home():
+@app.route('/')
+def index():
     return render_template('bookit-welcome.html')
 
 @app.route('/users')
-    def users():
-        """Users page: displays all users in the Users table"""
-        all_users = get_all(Users)
+def users():
+    """Users page: displays all users in the Users table"""
+    all_users = get_all(Users)
         
-        return render_template('users.html', users=all_users)
+    return render_template('users.html', users=all_users)
 
 
 
@@ -36,7 +36,7 @@ def createaccount():
             return redirect(url_for('home'))
         except Exception as e:
                 print("Error inserting user:", e)
-    return render_template('signup.html')
+    return render_template('createaccount.html')
 
 
 #Log In Page
