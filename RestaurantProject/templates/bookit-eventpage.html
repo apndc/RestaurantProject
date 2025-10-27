@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <script 
+  src="https://maps.googleapis.com/maps/api/js?key={{ api_key }}&libraries=places&callback=initMap"
+  loading="async">
+</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BookIt — Interactive Event Planner Dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+  <header>
+    <div class="logo">🍽️ BookIt</div>
+  </header>
+
+  <div class="greeting">Hi EP’s Name</div>
+
+  <main>
+    <section class="calendar">
+      <h3>Calendar View</h3>
+      <div class="calendar-controls">
+        <button onclick="switchView('week')">Week</button>
+        <button onclick="switchView('month')">Month</button>
+      </div>
+      <div class="calendar-grid" id="calendarGrid"></div>
+    </section>
+
+    <section class="customers">
+      <h3>Upcoming Customers</h3>
+      <ul>
+        <!--put the link to customer's name from ? table-->
+      </ul>
+    </section>
+
+    <!--Section for Event Planner to add a "To Do" items to a checklist-->
+    <section class="checklist">
+      <h3>Checklist</h3>
+      <input type="text" id="newTask" placeholder="Add a task..." />
+      <button onclick="addTask()">Add</button>
+      <ul id="taskList"></ul>
+    </section>
+
+    <!--This pulls a list of restaurants in the area-->
+    <section class="venues">
+      <h3>Map of Large Venues</h3>
+      <input type="text" id="venueSearch" placeholder="Search for event venues..." />
+      <button onclick="searchVenue()">Search</button>
+      <div id="map"></div>
+    </section>
+
+    <section class="restaurants">
+      <h3>Top Rated Restaurants</h3>
+      <ul>
+        <li><a onclick="openModal('The Grand Table', 'grand@table.com')">The Grand Table</a></li>
+        <li><a onclick="openModal('Riverside Bistro', 'owner@riverside.com')">Riverside Bistro</a></li>
+        <li><a onclick="openModal('Skyline Banquets', 'skyline@banquets.com')">Skyline Banquets</a></li>
+      </ul>
+    </section>
+  </main>
+
+  <footer><a href="#">Report a Problem</a></footer>
+
+  <!-- Modal -->
+  <div class="modal" id="modal">
+    <div class="modal-content">
+      <h4 id="modalName"></h4>
+      <p>Contact: <span id="modalEmail"></span></p>
+      <button onclick="closeModal()">Close</button>
+    </div>
+  </div>
+
+  <script>
+    // ----- Calendar -----
+    const calendarGrid = document.getElementById('calendarGrid');
+    function renderCalendar(view) {
+      calendarGrid.innerHTML = '';
+      const days = view === 'week' ? 7 : 30;
+      for (let i = 1; i <= days; i++) {
+        const div = document.createElement('div');
+        div.className = 'day';
+        div.textContent = `Day ${i}`;
+        div.onclick = () => alert(`Events for Day ${i}`);
+        calendarGrid.appendChild(div);
+      }
+    }
+    function switchView(view) { renderCalendar(view); }
+    renderCalendar('week');
+
+    // ----- Checklist -----
+    const taskList = document.getElementById('taskList');
+    const storedTasks = JSON.parse(localStorage.getItem('bookitTasks')) || [];
+    function renderTasks() {
+      taskList.innerHTML = '';
+      storedTasks.forEach((task, i) => {
+        const li = document.createElement('li');
+        li.textContent = task;
+        const btn = document.createElement('button');
+        btn.textContent = 'X';
+        btn.onclick = () => { storedTasks.splice(i, 1); saveTasks(); };
+        li.appendChild(btn);
+        taskList.appendChild(li);
+      });
+    }
+    function addTask() {
+      const input = document.getElementById('newTask');
+      if (input.value.trim() !== '') {
+        storedTasks.push(input.value.trim());
+        input.value = '';
+        saveTasks();
+      }
+    }
+    function saveTasks() {
+      localStorage.setItem('bookitTasks', JSON.stringify(storedTasks));
+      renderTasks();
+    }
+    renderTasks();
+
+    // ----- Restaurants Modal -----
+    function openModal(name, email) {
+      document.getElementById('modal').style.display = 'flex';
+      document.getElementById('modalName').textContent = name;
+      document.getElementById('modalEmail').textContent = email;
+    }
+    function closeModal() {
+      document.getElementById('modal').style.display = 'none';
+    }
+
+    // ----- Google Maps + Places -----
+    let map, service, infowindow;
+
+    function initMap() {
+      const center = { lat: 40.7128, lng: -74.0060 }; // NYC default
+      map = new google.maps.Map(document.getElementById("map"), {
+        zoom: 13,
+        center: center,
+      });
+      infowindow = new google.maps.InfoWindow();
+    }
+
+    function searchVenue() {
+      const query = document.getElementById('venueSearch').value;
+      if (!query) { alert("Please enter a search term."); return; }
+
+      const request = {
+        query: query + " event venues",
+        fields: ["name", "geometry", "formatted_address"],
+      };
+
+      service = new google.maps.places.PlacesService(map);
+      service.textSearch(request, (results, status) => {
+        if (status === google.maps.places.PlacesServiceStatus.OK) {
+          map.setCenter(results[0].geometry.location);
+          results.forEach(place => {
+            const marker = new google.maps.Marker({
+              map,
+              position: place.geometry.location,
+              title: place.name,
+            });
+            marker.addListener("click", () => {
+              infowindow.setContent(`<strong>${place.name}</strong><br>${place.formatted_address}`);
+              infowindow.open(map, marker);
+            });
+          });
+        } else {
+          alert("No venues found.");
+        }
+      });
+    }
+  </script>
+</body>
+</html>

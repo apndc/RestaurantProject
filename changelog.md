@@ -1,3 +1,8 @@
+# CHANGES [v2.0.0 BETA]:
+#### Started Adding Front End
+    * Still Needs To Be Integrated Properly
+(Just so we can have a consistent starting point)
+
 # CHANGES [v1.1.0]:
 
 ### ***REQUIRED FIXES***
