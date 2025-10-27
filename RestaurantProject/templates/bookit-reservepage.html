@@ -1,0 +1,74 @@
+<!-- templates/reservation.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BookIt — Reservation Booking</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header>
+    <div class="logo">🍽️ BookIt</div>
+  </header>
+
+  <main>
+    <section class="reservation-page">
+      <!-- Header with restaurant info -->
+      <div class="reservation-header">
+        <p><strong>Restaurant Image / Name:</strong> <!-- Insert dynamically --></p>
+        <p><strong>Reservation Time:</strong> <!-- Insert dynamically --></p>
+        <p><strong>Number of Guests:</strong> <!-- Insert dynamically --></p>
+        <p><strong>Date:</strong> <!-- Insert dynamically --></p>
+      </div>
+
+      <!-- Reservation Form -->
+      <div class="reservation-form">
+        <h3>Reservation Info</h3>
+        <form id="reservationForm" method="POST">
+          <!-- Guest Info -->
+          <label for="name">Name</label>
+          <input type="text" id="name" name="name" placeholder="Enter your name" required>
+
+          <label for="phone">Phone Number</label>
+          <input type="text" id="phone" name="phone" placeholder="Enter phone number" required>
+
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" placeholder="Enter email" required>
+
+          <label for="special">Special Occasion</label>
+          <input type="text" id="special" name="special" placeholder="Birthday, Anniversary, etc.">
+
+          <!-- Card Info -->
+          <h4>Card Details</h4>
+          <p>This restaurant requires a credit card to hold your booking</p>
+
+          <label for="cardNumber">Card Number</label>
+          <input type="text" id="cardNumber" name="cardNumber" placeholder="XXXX-XXXX-XXXX-XXXX" required>
+
+          <label for="nameOnCard">Name on Card</label>
+          <input type="text" id="nameOnCard" name="nameOnCard" placeholder="Full Name" required>
+
+          <label for="expDate">Exp Date</label>
+          <input type="text" id="expDate" name="expDate" placeholder="MM/YY" required>
+
+          <label for="cvv">CVV</label>
+          <input type="text" id="cvv" name="cvv" placeholder="XXX" required>
+
+          <!-- Reservation Updates -->
+          <p>Would you like to receive updates about your reservation?</p>
+          <select name="updates" id="updates">
+            <option value="none">No</option>
+            <option value="email">Email</option>
+            <option value="text">Text</option>
+          </select>
+
+          <button type="submit">BookIT!</button>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <footer><a href="#">Report a Problem</a></footer>
+</body>
+</html>

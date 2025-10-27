@@ -12,10 +12,15 @@ class Reservation(Base):
     UserID = Column(Integer, ForeignKey('Account.UserID'), nullable=False)
     RID = Column(Integer, ForeignKey('RestaurantInfo.RID'), nullable=False)
 
+    #Relationships
+    user = relationship("Account", back_populates="reservations")
+    restaurant = relationship("RestaurantInfo", back_populates="reservations")
+    event = relationship("Events", back_populates="reservation", uselist=False)
+
     #Other info in table 
     NumberOfGuests = Column(Integer)
     Time = Column(String(5))
 
     def __repr__(self):
-        return f""" Reservation ID: {self.ReservationID}, User ID: {self.UserID}, Resturarnt ID: {self.RID}, Number of Guests: {self.NumberOfGuests}, 
+        return f""" Reservation ID: {self.ReservationID}, User ID: {self.UserID}, Restaurant ID: {self.RID}, Number of Guests: {self.NumberOfGuests}, 
         Time: {self.Time}"""

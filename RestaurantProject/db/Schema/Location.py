@@ -12,6 +12,10 @@ class Location(Base):
     State= Column(String(2))
     StreetName= Column(String(40))
 
+    #Relationships
+    accounts = relationship("Account", back_populates="location")
+    restaurants = relationship("RestaurantInfo", back_populates="location")
+
     def __repr__(self):
         return f""" Zip Code: {self.Zipcode}, City: {self.City}, State: {self.State}, Street Name: {self.StreetName}"""
 

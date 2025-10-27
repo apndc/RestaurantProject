@@ -1,0 +1,49 @@
+<!-- templates/bookit-restaurant.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BookIt - Restaurant</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="logo">
+            <h1>BookIt</h1>
+        </div>
+    </header>
+
+    <!-- Restaurant Info Section -->
+    <main class="restaurant-container">
+        <!-- Restaurant Image and Name -->
+        <section class="restaurant-header">
+            <img src="{{ url_for('static', filename='restaurant-placeholder.jpg') }}" alt="Restaurant Image" class="restaurant-image">
+            <h2 class="restaurant-name">Restaurant Name</h2>
+        </section>
+
+        <!-- Restaurant Details and Menu -->
+        <section class="restaurant-details-menu">
+            <!-- Left side: details -->
+            <div class="restaurant-details">
+                <p><strong>Location:</strong> 123 Main St, City</p>
+                <p><strong>Phone:</strong> (123) 456-7890</p>
+                <p><strong>Cuisine:</strong> Italian</p>
+                <p><strong>Average Prices:</strong> $15-$30</p>
+            </div>
+
+            <!-- Right side: menu -->
+            <div class="restaurant-menu">
+                <h3>Menu</h3>
+                <ul>
+                    <li>Spaghetti Carbonara - $18</li>
+                    <li>Margherita Pizza - $15</li>
+                    <li>Lasagna - $20</li>
+                    <li>Tiramisu - $8</li>
+                </ul>
+            </div>
+        </section>
+    </main>
+</body>
+</html>
