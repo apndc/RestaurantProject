@@ -6,9 +6,55 @@ load_dotenv()
 app = Flask(__name__)
 
 # Home page: BookIt Welcome
-@app.route('/')
+@app.route('/home')
 def home():
     return render_template('bookit-welcome.html')
+
+@app.route('/users')
+    def users():
+        """Users page: displays all users in the Users table"""
+        all_users = get_all(Users)
+        
+        return render_template('users.html', users=all_users)
+
+
+
+#Create Account
+@app.route('/createaccount', methods=["GET", "POST"])
+def createaccount():
+    if request.method == 'POST':
+        try:
+            user = Users(FirstName = request.form["FirstName"],
+            LastName = request.form["LastName"],
+            Email = request.form ["Email"],
+            PhoneNumber = request.form["PhoneNumber"],
+            Location = request.form["Location"],
+            Birthday = request.form["Birthday"],
+            Password = request.form["Password"])
+
+            insert(user)
+            return redirect(url_for('home'))
+        except Exception as e:
+                print("Error inserting user:", e)
+    return render_template('signup.html')
+
+
+#Log In Page
+@app.route('/login', methods=["GET", "POST"])
+def login():
+    if request.method == 'POST':
+        Email = request.form.get("Email")
+        Password = request.form.get("Password")
+        try:
+            user = get_one(Users, Email=email)
+
+            if user and user.Password == Password:
+                return redirect(url_for('home'))
+
+        except Exception as e:
+                print("Error during login:", e)
+                return render_template('login.html', error="An error occured. Please try again.")
+    return render_template('login.html')
 
 # Event Page
 @app.route('/event')
@@ -47,3 +93,4 @@ def reservation():
 
 if __name__ == '__main__':
     app.run(debug=True)
+
