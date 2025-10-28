@@ -5,6 +5,7 @@ from .Events import Events
 from .Location import Location
 from .Reservation import Reservation
 from .RestaurantInfo import RestaurantInfo
+from .Menu import Menu
 
 # make tables (models) available when importing from schema package
-__all__ = ['Account', 'CardInfo', 'Events', 'Location', 'Reservation', 'RestaurantInfo']
+__all__ = ['Account', 'CardInfo', 'Events', 'Location', 'Reservation', 'RestaurantInfo', 'Menu']
