@@ -35,13 +35,17 @@
         <div id="map" style="height: 500px; width: 100%;"></div>
         -->
         
-        <section class="restaurant-details-menu">
+        <section class="restaurant-card">
             <!-- TODO: Make 'restaurant-details-menu' a Box with (maybe) 
                  The Restaurant Image with The Name Under It-->
             {% for restaurant in restaurants %}
             <a href="{{ url_for('restaurant', name=restaurant.Name) }}">
-                <button>{{restaurant.Name}}</button>
+                <button>
+                    {{restaurant.Name}}
+                    <!-- Insert Distance -->
+                </button>
             </a>
+            <br>
             {% endfor %}
         </section>
     </main>

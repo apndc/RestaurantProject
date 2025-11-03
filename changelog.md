@@ -1,7 +1,13 @@
 # CHANGES [v2.1.0]: Templating and Page Generation
 
+# FINAL COMMIT 
+    Added Login and Signup Functionality
+* <b>RELOAD TABLES</b>
+# COMMIT 1
 ## **NEW TABLE**
     Testing with a Menu Table to load Menu Items Per Page
+## "Schema" -> "schema"
+    Fixed Paths
 ## Restaurant Table
 * Added New <i><b>Name</b></i> and <i><b>Description</b></i> Fields
     * <b>RELOAD TABLES AGAIN BEFORE USE</b>

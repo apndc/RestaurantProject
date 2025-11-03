@@ -1,12 +1,22 @@
-from flask import Flask, render_template, request
-import os
+from flask import Flask, render_template, request, url_for, redirect
+import os, bcrypt, logging
 from sqlalchemy.orm import joinedload
 from dotenv import load_dotenv
 from db.server import get_session
+from db.query import get_all, insert, get_one
 from db.schema import *
 from werkzeug.utils import secure_filename
 from collections import defaultdict
 load_dotenv()
+
+api_key = os.environ["GOOGLE_API_KEY"]
+
+# Setup for Logger
+logging.basicConfig( 
+    filename="logs/log.txt", level=logging.INFO, filemode="a", format="%(asctime)s [%(levelname)s] %(message)s"
+)
+
+logger = logging.getLogger(__name__)
 
 # Stored Stuff For Methods
 order = ["Appetizer", "Entree", "Dessert", "Drinks"]
@@ -35,16 +45,122 @@ app = Flask(__name__)
 def home():
     return render_template('bookit-welcome.html')
 
+@app.route('/error')
+def error():
+    """Doc later"""
+    errors = request.args.get('errors', 'Unknown error')
+    return render_template('error.html', errors=errors)
+
+@app.route('/createaccount', methods=["GET", "POST"])
+def createaccount():
+    error: str = None
+    is_valid: bool = False
+
+    if request.method == 'POST':
+        # Make A Location
+        
+        session = get_session()
+        
+        location_data: dict = {}
+
+        valid_location = False
+        
+        for key, value in request.form.items():
+            if key == 'StreetName' or key == 'City' or key == 'State' or key == 'ZipCode':
+                location_data[key] = value.strip()
+        
+        newLocation = Location(**location_data)
+        
+        try:
+            session.add(newLocation)
+            session.flush()
+            location_id = newLocation.LocationID
+            session.commit()
+            valid_location = True
+        except Exception as e:
+                logging.error(f"An error has occurred: {e}")
+                return redirect(url_for('error', errors=str(e)))
+        # Make A User
+        FirstName=request.form["FirstName"].upper()
+        LastName=request.form["LastName"].upper()
+        PhoneNumber=request.form["PhoneNumber"]
+        Email=request.form["Email"].lower()
+
+        if FirstName.isalpha() and LastName.isalpha() and PhoneNumber.isnumeric() and len(PhoneNumber) == 10:
+            print(f"Inputs {FirstName}, {LastName}, and {PhoneNumber} are valid.")
+            is_valid = True
+        elif not FirstName.isalpha():
+            print(f"Input: {FirstName} is Invalde")
+            #error = error_msg
+
+        if is_valid and valid_location:
+
+            user_data: dict = {}
+
+            user_data['LocationID'] = location_id
+
+            for key, value in request.form.items():
+                if key == 'FirstName' or key == 'LastName' or key == 'Role':
+                    user_data[key] = value.strip().upper()
+                elif key == 'Email':
+                    user_data[key] = value.strip().lower()
+                elif key == 'PhoneNumber':
+                    user_data[key] = value.strip().replace("-", "")
+                elif key == 'Password':
+                    user_data[key] = value.strip()
+            
+            # converting password to array of bytes
+            bytes = user_data['Password'].encode('utf-8')
+
+            # generating the salt
+            salt = bcrypt.gensalt()
+
+            # Hashing the password
+            user_data['Password'] = bcrypt.hashpw(bytes, salt)
+
+            try:
+                if not get_one(Account, Email=user_data['Email']):
+                    insert(Account(**user_data))
+                else:
+                    return redirect(url_for('error', errors="Already An Account With This Email"))
+            except Exception as e:
+                logging.error(f"An error has occurred: {e}")
+                return redirect(url_for('error', errors=str(e)))
+            
+            return redirect(url_for('home'))
+
+    return render_template('createaccount.html')
+
+@app.route('/login', methods=["GET", "POST"])
+def login():
+    if request.method == 'POST':
+        try:
+            import codecs
+            # Get SQLAlchemy Object And See If The Email + Pass Combo Exists 
+            attempted_user = get_one(Account, Email=request.form["Email"].lower())
+            userPw = request.form["Password"].encode('utf-8')
+            
+            stored_hash_hex = attempted_user.Password
+            stored_hash_bytes = codecs.decode(stored_hash_hex.replace("\\x", ""), "hex")
+
+            if bcrypt.checkpw(userPw, stored_hash_bytes):
+                return redirect(url_for('home'))
+            else:
+                logging.error(f"Wrong Password")
+        except Exception as e:
+            logging.error(f"An error has occurred: {e}")
+            return redirect(url_for('login'))
+        
+    return render_template('login.html')
+
 # General Events Page
 @app.route('/event')
 def eventpage():
-    api_key = os.environ["GOOGLE_API_KEY"]
     return render_template('bookit-eventpage.html', api_key=api_key)
 
 # Event Page
 @app.route('/event/<int:event_id>')
 def events(event_id):
-    api_key = os.environ["GOOGLE_API_KEY"]
     return render_template('bookit-eventpage.html', api_key=api_key, event_id=event_id)
 
 # Restaurant Overview
@@ -53,7 +169,6 @@ def restaurant_page():
     session = get_session()
     restaurants = session.query(RestaurantInfo).all()
     session.close()
-    api_key = os.environ["GOOGLE_API_KEY"]
     return render_template('bookit-restaurant.html', restaurants=restaurants, api_key=api_key)
 
 # Dollar Filter for Formatting
@@ -103,6 +218,11 @@ def reservation():
     # GET request: render the reservation page
     return render_template('bookit-reservepage.html')
 
+# TESTING STUFF DELETE LATER
+@app.route('/test')
+def test():
+    return render_template('test.html')
 
+#Debug stuff (given to us)
 if __name__ == '__main__':
     app.run(debug=True)

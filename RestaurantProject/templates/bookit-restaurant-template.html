@@ -42,7 +42,7 @@
                 <ul>
                     {% for item in items %}
                         <li>
-                            <strong>{{ item.ItemName }} --- ${{ item.Price | dollars }}</strong>
+                            <strong>{{ item.ItemName }} --- {{ item.Price | dollars }}</strong>
                             <br>
                             <i>{{ item.Description }}</i>
                         </li>
@@ -50,6 +50,9 @@
                 </ul>
                 {% endfor %}
             </div>
+        </section>
+        <section class="backButton">
+            <a href="/restaurant"><button>Return To Restaurant View</button></a>
         </section>
     </main>
 </body>

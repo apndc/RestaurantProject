@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <title>🍽️ BookIt Sign Up Page</title>
+        <link rel="stylesheet" href="/static/style.css">
+    </head>
+
+    <header>
+        <a href="{{ url_for('home') }}" class="logo">🍽️ BookIt</a>
+    </header>
+    <body>
+        <main class="sign_page">
+        <section class="sign_page">
+        <h1>Sign Up</h1>
+            <!-- Create a sign up form here -->
+        <form method="post" action="/createaccount" class="form-grid">
+        <div class="form-grid two-col">
+                <div>
+            <label for="FirstName">First Name:</label>
+            <input type="text" id="FirstName" name="FirstName" value="" required/>
+            </div>
+            
+            <div>
+            <label for="LastName">Last Name:</label>
+            <input type="text" id="LastName" name="LastName" value="" required/> 
+        </div>
+    </div>
+
+    <div class="form-grid two-col">
+            <div>
+            <label for="Email">Email:</label>
+            <input type="email" id="Email" name="Email" value="" required/>
+            </div>
+
+            <div>
+            <label for="PhoneNumber">Phone Number: </label>
+            <input type="tel" id="PhoneNumber" name="PhoneNumber" value="" pattern="[0-9]{10}" />
+            </div>
+    </div>
+
+    <div class="form-grid two-col">
+        <div>
+        <label for="StreetName">Street Name:</label>
+        <input type="text" id="StreetName" name="StreetName" value="" required/>
+        </div>
+
+        <div>
+        <label for="City">City:</label>
+        <input type="text" id="City" name="City" value="" required/> 
+        </div>
+    </div>
+
+    <div class="form-grid two-col">
+        <div>
+            <label for="State">State:</label>
+            <input type="text" id="State" name="State" value="" required/>
+        </div>
+
+        <div>
+            <label for="ZipCode">Zip Code:</label>
+            <input type="text" id="ZipCode" name="ZipCode" value="" required/> 
+        </div>
+    </div>
+        
+    <div class="form-grid two-col">
+        <!--
+        <div>
+            <label for="Birthday">Birthday: </label>
+            <input type="text" id="Birthday" name="Birthday" value="" required/> 
+        </div>
+        -->
+    </div>
+
+    <div class="form-grid two-col">
+        <div>
+            <label for="Password">Password:</label>
+            <input type="password" id="Password" name="Password">
+        </div>
+
+        <div>
+            <input type="submit" value="Submit"> 
+        </div>
+    </div>
+    <br>
+
+        </form>     
+        <a href="/">
+            <button type="button" id="home">Home</button>
+        </a>
+    </body>

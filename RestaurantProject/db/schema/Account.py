@@ -11,6 +11,9 @@ class Account(Base):
     #Foreign Keys
     LocationID = Column(Integer, ForeignKey('Location.LocationID'), nullable=False)
 
+    #Name
+    FirstName = Column(String(40))
+    LastName = Column(String(40))
     #Other info in table 
     Email = Column(String(100))
     PhoneNumber = Column(String(10))
