@@ -26,7 +26,6 @@ def createaccount():
             LastName = request.form["LastName"],
             Email = request.form ["Email"],
             PhoneNumber = request.form["PhoneNumber"],
-            Location = request.form["Location"],
             StreetName = request.form["StreetName"],
             City = request.form["City"],
             State = request.form["State"],
