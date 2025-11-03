@@ -17,8 +17,6 @@ def users():
         
     return render_template('users.html', users=all_users)
 
-
-
 #Create Account
 @app.route('/createaccount', methods=["GET", "POST"])
 def createaccount():
@@ -29,7 +27,10 @@ def createaccount():
             Email = request.form ["Email"],
             PhoneNumber = request.form["PhoneNumber"],
             Location = request.form["Location"],
-            Birthday = request.form["Birthday"],
+            StreetName = request.form["StreetName"],
+            City = request.form["City"],
+            State = request.form["State"],
+            ZipCode = request.form["ZipCode"],
             Password = request.form["Password"])
 
             insert(user)
