@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Delete Account</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <h1>Delete Account</h1>
+    <div>
+        <!-- Delete account form -->
+        <form method="post">
+            <label for="Email">Email:</label><br>
+            <input type="text" id="Email" name="Email" value="" required><br><br>
+
+            <input type="submit" value="Delete Account">
+        </form>
+    </div>
+
+    {% if error %}
+        <p style="color:red;">{{ error }}</p>
+    {% elif message %}
+        <p style="color:green;">{{ message }}</p>
+    {% endif %}
+
+    <br>
+    <a href="/">
+        <button type="button" id="home">Home</button>
+    </a>
+</body>
+</html>

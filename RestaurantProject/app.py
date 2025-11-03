@@ -17,6 +17,26 @@ def users():
         
     return render_template('users.html', users=all_users)
 
+#Delete SQL
+@app.route('/delete', methods=["GET", "POST"])
+def delete():
+    error = None
+    message = None
+    if request.method == "POST":
+        try:
+            email = request.form.get("Email")
+
+            user = get_one(Users, Email=email)
+            if not user:
+                error = "No account found with that email."
+            else:
+                delete(user)
+                message = f"Account with email {email} has been deleted."
+        except Exception as e:
+            print("Error deleting user:", e)
+            error = "An error occured. Please try again"
+    return render_template("delete.html", error=error, message=message)
+            
 
 
 #Create Account
