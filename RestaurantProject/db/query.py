@@ -45,3 +45,16 @@ def get_one(table, **filters) -> object:
         return record
     finally:
         session.close()
+
+def delete_one(record):
+
+    session = get_session()
+
+    try: 
+        session.delete(record)
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        print("Error Inserting Records:", e)
+    finally:
+        session.close()

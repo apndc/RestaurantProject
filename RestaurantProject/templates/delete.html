@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Delete Account</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<header>
+    <a href="{{ url_for('home') }}" class="logo">🍽️ BookIt</a>
+</header>
+<body>
+    <h1>Delete Account</h1>
+    <section class="sign_page">
+        <!-- Delete account form -->
+        <form method="post">
+            <label for="Email">Email:</label><br>
+            <input type="email" id="Email" name="Email" value="" required><br><br>
+            <div>
+                <label for="Password">Password:</label><br>
+                <input type="password" id="Password" name="Password">
+            </div>
+            <br>
+            <input type="submit" value="Delete Account">
+        </form>
+    </section>
+
+    {% if error %}
+        <p style="color:red;">{{ error }}</p>
+    {% elif message %}
+        <p style="color:green;">{{ message }}</p>
+    {% endif %}
+
+    <br>
+    <a href="/">
+        <button type="button" id="home">Home</button>
+    </a>
+</body>
+</html>

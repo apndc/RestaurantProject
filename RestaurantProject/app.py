@@ -3,7 +3,7 @@ import os, bcrypt, logging
 from sqlalchemy.orm import joinedload
 from dotenv import load_dotenv
 from db.server import get_session
-from db.query import get_all, insert, get_one
+from db.query import *
 from db.schema import *
 from werkzeug.utils import secure_filename
 from collections import defaultdict
@@ -33,7 +33,7 @@ def full_location(location):
         location.StreetName,
         location.City,
         location.State,
-        location.Zipcode
+        location.ZipCode
     ]
     # Filter out any None or empty strings and join with commas
     return ", ".join(str(p) for p in parts if p)
@@ -90,7 +90,7 @@ def createaccount():
             print(f"Inputs {FirstName}, {LastName}, and {PhoneNumber} are valid.")
             is_valid = True
         elif not FirstName.isalpha():
-            print(f"Input: {FirstName} is Invalde")
+            print(f"Input: {FirstName} is Invalid")
             #error = error_msg
 
         if is_valid and valid_location:
@@ -130,6 +130,35 @@ def createaccount():
             return redirect(url_for('home'))
 
     return render_template('createaccount.html')
+
+#Delete SQL
+@app.route('/delete', methods=["GET", "POST"])
+def delete():
+    error = None
+    message = None
+    if request.method == "POST":
+        try:
+            import codecs
+            email = request.form.get("Email").lower().strip()
+
+            user = get_one(Account, Email=email)
+
+            userPw = request.form["Password"].encode('utf-8')
+            
+            if not user:
+                error = "No account found with that email."
+                logging.error(error)
+            else:
+                stored_hash_hex = user.Password
+                stored_hash_bytes = codecs.decode(stored_hash_hex.replace("\\x", ""), "hex")
+                
+                if bcrypt.checkpw(userPw, stored_hash_bytes):
+                    delete_one(user)
+                    message = f"Account with email {email} has been deleted."
+        except Exception as e:
+            logging.error(f"Error deleting user:, {e}")
+            error = "An error occured. Please try again"
+    return render_template("delete.html", error=error, message=message)
 
 @app.route('/login', methods=["GET", "POST"])
 def login():

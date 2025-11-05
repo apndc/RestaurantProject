@@ -1,8 +1,14 @@
 # CHANGES [v2.1.0]: Templating and Page Generation
 
-# FINAL COMMIT 
-    Added Login and Signup Functionality
-* <b>RELOAD TABLES</b>
+# FINAL COMMIT
+## <b>RELOAD TABLES AND RERUN IMPORTS AS USUAL</b> 
+## Added: 
+* Login -> Connected to DB 
+* Signup -> Connected to DB
+* Delete -> Connected to DB
+# To-Do List:
+* Add More Client Side Locking
+* <i>Make It Look Cool</i>
 # COMMIT 1
 ## **NEW TABLE**
     Testing with a Menu Table to load Menu Items Per Page
