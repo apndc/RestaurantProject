@@ -1,0 +1,7 @@
+UserID,LocationID,Name,Description,PhoneNumber,Cuisine,Capacity,Fee
+3,2,Ruby Grill,"A warm and welcoming restaurant known for its signature ruby-red interior and fusion cuisine.",2125553322,Italian,85,25
+5,5,City Bites,"Trendy downtown spot offering American comfort food with a modern twist.",7735559988,American,120,35
+3,1,Creekside Pizza,"Cozy family-owned pizzeria located near the creek, famous for its wood-fired crust.",8455552200,Pizza,40,15
+4,3,The Garden Table,"Vegetarian-friendly restaurant using locally sourced ingredients.",8455553344,Vegetarian,60,20
+2,4,Sunset Sushi,"Elegant sushi bar offering omakase experiences with fresh daily catches.",9025558888,Japanese,50,40
+

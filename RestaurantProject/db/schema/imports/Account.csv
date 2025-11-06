@@ -1,0 +1,6 @@
+FirstName, LastName, Email,PhoneNumber,Role,Password,LocationID
+John, Smith, john.smith@email.com,8455551001,customer,hashed_pw_1,1
+Emily, Rose, emily.rose@email.com,8455551002,customer,hashed_pw_2,3
+Ruby, Grill, admin@rubygrill.com,8455552001,owner,hashed_pw_3,2
+Kelly, M, kelly.m@email.com,2125552011,customer,hashed_pw_4,4
+City, Bites, manager@citybites.com,7735558001,owner,hashed_pw_5,5

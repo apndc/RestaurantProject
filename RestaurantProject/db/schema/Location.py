@@ -7,7 +7,7 @@ class Location(Base):
 
     LocationID = Column(Integer, primary_key=True, autoincrement=True)
 
-    Zipcode= Column(Integer)
+    ZipCode= Column(Integer)
     City= Column(String(40))
     State= Column(String(2))
     StreetName= Column(String(40))
@@ -17,6 +17,6 @@ class Location(Base):
     restaurants = relationship("RestaurantInfo", back_populates="location")
 
     def __repr__(self):
-        return f""" Zip Code: {self.Zipcode}, City: {self.City}, State: {self.State}, Street Name: {self.StreetName}"""
+        return f""" Zip Code: {self.ZipCode}, City: {self.City}, State: {self.State}, Street Name: {self.StreetName}"""
 
     

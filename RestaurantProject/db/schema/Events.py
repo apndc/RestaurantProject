@@ -18,4 +18,4 @@ class Events(Base):
     reservation = relationship("Reservation", back_populates="event")
 
     def __repr__(self):
-        return f""" Event ID: {self.EventID}, Reservation ID: {self.ReservationID}, Restaurant ID: {self.RID}, Type of Event: {self.TypeOfEvent}"""
+        return f""" Event ID: {self.EventID}, Reservation ID: {self.ReservationID}, Type of Event: {self.TypeOfEvent}"""

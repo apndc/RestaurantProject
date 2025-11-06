@@ -8,18 +8,21 @@
 </head>
 <body>
   <header>
-    <div class="logo">🍽️ BookIt</div>
+    <a href="{{ url_for('home') }}" class="logo">🍽️ BookIt</a>
   </header>
 
   <main>
-    <section class="welcome-page">
-      <h1>Welcome to BookIt!</h1>
-      <p>Choose an option below to continue:</p>
+    <section class="welcome_page">
+      <h1>Welcome to BookIt🍽️!</h1>
+      <p>Discover. Reserve. Enjoy.</p>
       <div class="links">
-        <a class="button" href="{{ url_for('eventpage') }}">View Events</a>
-        <a class="button" href="{{ url_for('reservation') }}">Make a Reservation</a>
-        <a class="button" href="{{ url_for('restaurant') }}">View Restaurant</a>
+        <a class="button" href="{{ url_for('createaccount') }}">Sign Up</a>
+        <a class="button" href="{{ url_for('login') }}">Login</a>
+        <a class="button" href="{{ url_for('delete') }}">Delete Account</a>
+        <a class="button" href="{{ url_for('restaurant_page') }}">Restaurants</a>
       </div>
+      <p></p>
+      <p style="font-size: 20px;">Choose an option above to start planning your next night out!</p>
 
     </section>
   </main>

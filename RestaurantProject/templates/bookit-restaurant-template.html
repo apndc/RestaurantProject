@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BookIt - {{ restaurant.Name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <a href="{{ url_for('home') }}" class="logo">🍽️ BookIt</a>
+        <div class="logo">
+            <h1>{{ restaurant.Name }}</h1>
+        </div>
+    </header>
+
+    <!-- Restaurant Info Section -->
+    <main class="restaurant-container">
+        <!-- Restaurant Image and Name -->
+        <section class="restaurant-header">
+            <img src="{{ url_for('static', filename='assets/restaurant-placeholder.jpg') }}" alt="Restaurant Image" class="restaurant-image">
+            <h2 class="restaurant-name">{{ restaurant.Description }}</h2>
+        </section>
+        
+        <!-- Restaurant Details and Menu -->
+        <section class="restaurant-details-menu">
+            <!-- Left side: details -->
+            <h2>Location</h2>
+            <div class="restaurant-details">
+                <p><strong>Street:</strong> {{ restaurant.location.StreetName }}</p>
+                <p><strong>City:</strong> {{ restaurant.location.City }}</p>
+                <p><strong>State:</strong> {{ restaurant.location.State }}</p>
+                <p><strong>Zip Code:</strong> {{ restaurant.location.ZipCode }}</p>
+                <a href="https://maps.google.com/?q={{fullLocation}}" target="_blank"><button>Open In Google Maps</button></a>
+            </div>
+
+            <!-- Right side: menu -->
+            <div class="restaurant-menu">
+                <h2>Menu</h2>
+                {% for category, items in categories %}
+                <h3>{{ category }}</h3>
+                <ul>
+                    {% for item in items %}
+                        <li>
+                            <strong>{{ item.ItemName }} --- {{ item.Price | dollars }}</strong>
+                            <br>
+                            <i>{{ item.Description }}</i>
+                        </li>
+                    {% endfor %}
+                </ul>
+                {% endfor %}
+            </div>
+        </section>
+        <section class="backButton">
+            <a href="/restaurant"><button>Return To Restaurant View</button></a>
+        </section>
+    </main>
+</body>
+</html>
