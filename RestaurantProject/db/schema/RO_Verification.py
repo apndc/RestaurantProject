@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String
-from db.schema.__init__ import Base  # Adjust import if needed
+from . import Base 
 
 class RO_Verification(Base):
     __tablename__ = 'ro_verification'

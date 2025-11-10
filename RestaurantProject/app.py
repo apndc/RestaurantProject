@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, url_for, redirect
 import os, bcrypt, logging
 from sqlalchemy.orm import joinedload
 from dotenv import load_dotenv
-from RestaurantProject.db.schema import EP_Verification, RO_Verification
+from db.schema import EP_Verification, RO_Verification
 from db.server import get_session
 from db.query import *
 from db.schema import *
