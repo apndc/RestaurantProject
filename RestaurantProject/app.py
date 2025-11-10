@@ -179,40 +179,47 @@ def delete():
 @app.route('/login', methods=["GET", "POST"])
 def login():
     if request.method == 'POST':
+        import codecs
+        email = request.form["Email"].lower()
+        password = request.form["Password"].encode('utf-8')
+
         try:
-            import codecs
-            # Get SQLAlchemy Object And See If The Email + Pass Combo Exists 
-            attempted_user = get_one(Account, Email=request.form["Email"].lower())
-            userPw = request.form["Password"].encode('utf-8')
+            # Get user by email
+            attempted_user = get_one(Account, Email=email)
+
+            if attempted_user is None:
+                logging.error("No account found for that email.")
+                return redirect(url_for('login'))
 
             stored_hash_hex = attempted_user.Password
             stored_hash_bytes = codecs.decode(stored_hash_hex.replace("\\x", ""), "hex")
 
-            if bcrypt.checkpw(userPw, stored_hash_bytes):
-                # Password correct, now store info in session
-                session['user_id'] = attempted_user.id
-                session['role'] = attempted_user.Role  # make sure your Account table has Role column
+            # Validate password
+            if bcrypt.checkpw(password, stored_hash_bytes):
+                # Redirect based on role (case-insensitive)
+                role = attempted_user.Role.strip().lower()
 
-                # Redirect based on role
-                role = attempted_user.Role.lower()  #convert role to lower case
-                
-                if attempted_user.Role == 'EventPlanner':
+                if role == 'event_planner':
+                    logging.info(f"{email} logged in as Event Planner.")
                     return redirect(url_for('eventpage'))
-                elif attempted_user.Role == 'RestaurantOwner':
-                    return redirect(url_for('restaurant_dashboard'))
-                else:
-                    return redirect(url_for('home'))  # fallback
 
+                elif role == 'restaurant_owner':
+                    logging.info(f"{email} logged in as Restaurant Owner.")
+                    return redirect(url_for('restaurant_page'))
+
+                else:
+                    logging.warning(f"{email} has unknown role '{attempted_user.Role}'. Redirecting home.")
+                    return redirect(url_for('home'))
             else:
-                logging.error("Wrong Password")
+                logging.error("Incorrect password.")
                 return redirect(url_for('login'))
 
         except Exception as e:
-            logging.error(f"An error has occurred: {e}")
+            print(f"Login error: {e}")
+            logging.exception(f"Error during login: {e}")
             return redirect(url_for('login'))
 
     return render_template('login.html')
-
 
 # General Events Page
 @app.route('/event')
