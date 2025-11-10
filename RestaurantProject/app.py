@@ -138,11 +138,11 @@ def createaccount():
 
         # --- Step 6: Role-based redirect ---
         if role == 'EVENT_PLANNER':
-            return redirect(url_for('bookit-eventpage'))
+            return redirect(url_for('eventpage'))
         elif role == 'RESTAURANT_OWNER':
-            return redirect(url_for('bookit-restaurant'))  # Or a dedicated RO dashboard
+            return redirect(url_for('restaurant'))  # Or a dedicated RO dashboard
         else:
-            return redirect(url_for('bookit-welcome'))
+            return redirect(url_for('welcome'))
 
     # GET request: render signup page
     return render_template('createaccount.html')
