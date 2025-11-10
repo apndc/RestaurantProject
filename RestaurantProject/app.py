@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, session, url_for, redirect
 import os, bcrypt, logging
+from sqlalchemy import func
 from sqlalchemy.orm import joinedload
 from dotenv import load_dotenv
 from db.schema import EP_Verification, RO_Verification
@@ -100,12 +101,12 @@ def createaccount():
             verification_code = request.form.get('verification_code', '').strip().lower()
 
             if role == 'EVENT_PLANNER':
-                record = session.query(EP_Verification).filter_by(
-                    verification_code=verification_code
+                record = session.query(EP_Verification).filter(
+                    func.lower(EP_Verification.verification_code)==verification_code
                 ).first()
             else:  # RESTAURANT_OWNER
-                record = session.query(RO_Verification).filter_by(
-                    verification_code=verification_code
+                record = session.query(RO_Verification).filter(
+                    func.lower(RO_Verification.verification_code)==verification_code
                 ).first()
 
             if not record:
