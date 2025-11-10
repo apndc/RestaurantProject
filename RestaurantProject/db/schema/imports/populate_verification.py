@@ -12,8 +12,8 @@ session.query(RO_Verification).delete()
 session.commit()
 
 # Insert dummy verification codes
-ep_codes = ['ABC456', 'DEF123']
-ro_codes = ['XYZ123', 'LMN789']
+ep_codes = ['ABC456']
+ro_codes = ['XYZ123']
 
 for code in ep_codes:
     session.add(EP_Verification(verification_code=code))
