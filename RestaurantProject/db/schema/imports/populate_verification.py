@@ -1,20 +1,26 @@
-# populate_verification.py
-from db.server import get_session
-from db.schema import EP_Verification, RO_Verification
+from db.server import get_session, engine  # make sure your engine is imported
+from db.schema import Base, EP_Verification, RO_Verification
+
+# Create tables in the database if they don't exist
+Base.metadata.create_all(engine)
 
 session = get_session()
 
-# Clear existing entries (optional)
+# Clear old data (optional)
 session.query(EP_Verification).delete()
 session.query(RO_Verification).delete()
+session.commit()
 
-# Add dummy credentials
-ep_record = EP_Verification(email="eventplanner@test.com", verification_code="abc456")
-ro_record = RO_Verification(email="restaurantowner@test.com", verification_code="xyz123")
+# Insert dummy verification codes
+ep_codes = ['ABC456', 'DEF123']
+ro_codes = ['XYZ123', 'LMN789']
 
-session.add_all([ep_record, ro_record])
+for code in ep_codes:
+    session.add(EP_Verification(verification_code=code))
+
+for code in ro_codes:
+    session.add(RO_Verification(verification_code=code))
 
 session.commit()
 session.close()
-
-print("Verification tables populated with dummy data!")
+print("Verification tables populated!")
