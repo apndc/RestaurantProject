@@ -97,16 +97,15 @@ def createaccount():
 
         # --- Step 3: Role verification for EP/RO ---
         if role in ['EVENT_PLANNER', 'RESTAURANT_OWNER']:
-            verification_email = request.form.get('verification_email', '').lower().strip()
             verification_code = request.form.get('verification_code', '').strip()
 
             if role == 'EVENT_PLANNER':
                 record = session.query(EP_Verification).filter_by(
-                    email=verification_email, verification_code=verification_code
+                    verification_code=verification_code
                 ).first()
             else:  # RESTAURANT_OWNER
                 record = session.query(RO_Verification).filter_by(
-                    email=verification_email, verification_code=verification_code
+                    verification_code=verification_code
                 ).first()
 
             if not record:
