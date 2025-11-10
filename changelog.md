@@ -1,6 +1,9 @@
 # CHANGES [v3.1.0]: 
 * Added Full Date and Time Field to Reservation
 * Cookie for Login and Signup to Stay Logged In
+* Login Specific Page Locking
+* Template for Header
+
 ## In Progress...
 # CHANGES [v2.1.0]: Templating and Page Generation
 
