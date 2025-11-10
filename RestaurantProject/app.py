@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, url_for, redirect
+from flask import Flask, render_template, request, session, url_for, redirect
 import os, bcrypt, logging
 from sqlalchemy.orm import joinedload
 from dotenv import load_dotenv
@@ -184,19 +184,33 @@ def login():
             # Get SQLAlchemy Object And See If The Email + Pass Combo Exists 
             attempted_user = get_one(Account, Email=request.form["Email"].lower())
             userPw = request.form["Password"].encode('utf-8')
-            
+
             stored_hash_hex = attempted_user.Password
             stored_hash_bytes = codecs.decode(stored_hash_hex.replace("\\x", ""), "hex")
 
             if bcrypt.checkpw(userPw, stored_hash_bytes):
-                return redirect(url_for('home'))
+                # Password correct, now store info in session
+                session['user_id'] = attempted_user.id
+                session['role'] = attempted_user.Role  # make sure your Account table has Role column
+
+                # Redirect based on role
+                if attempted_user.Role == 'EventPlanner':
+                    return redirect(url_for('eventpage'))
+                elif attempted_user.Role == 'RestaurantOwner':
+                    return redirect(url_for('restaurant_dashboard'))
+                else:
+                    return redirect(url_for('home'))  # fallback
+
             else:
-                logging.error(f"Wrong Password")
+                logging.error("Wrong Password")
+                return redirect(url_for('login'))
+
         except Exception as e:
             logging.error(f"An error has occurred: {e}")
             return redirect(url_for('login'))
-        
+
     return render_template('login.html')
+
 
 # General Events Page
 @app.route('/event')
