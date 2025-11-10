@@ -194,6 +194,8 @@ def login():
                 session['role'] = attempted_user.Role  # make sure your Account table has Role column
 
                 # Redirect based on role
+                role = attempted_user.Role.lower()  #convert role to lower case
+                
                 if attempted_user.Role == 'EventPlanner':
                     return redirect(url_for('eventpage'))
                 elif attempted_user.Role == 'RestaurantOwner':
