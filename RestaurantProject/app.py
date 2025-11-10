@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, url_for, redirect
+from flask import Flask, render_template, request, url_for, redirect, session, g
 import os, bcrypt, logging
 from sqlalchemy.orm import joinedload
 from dotenv import load_dotenv
@@ -7,9 +7,23 @@ from db.query import *
 from db.schema import *
 from werkzeug.utils import secure_filename
 from collections import defaultdict
+from functools import wraps
+from filters import register_filters
 load_dotenv()
 
+app = Flask(__name__)
+
 api_key = os.environ["GOOGLE_API_KEY"]
+
+# Key + Session Setup for Cookies
+app.secret_key = os.getenv("SECRET_KEY")
+
+app.config.update(
+    SESSION_COOKIE_HTTPONLY = True,
+    SESSION_COOKIE_SECURE = False,
+    SESSION_COOKIE_SAMESITE = "Lax",
+    PERMANENT_SESSION_LIFETIME = 60 * 60 * 24  # The Cookie Lasts For 1 Day and Then Expires
+)
 
 # Setup for Logger
 logging.basicConfig( 
@@ -21,6 +35,9 @@ logger = logging.getLogger(__name__)
 # Stored Stuff For Methods
 order = ["Appetizer", "Entree", "Dessert", "Drinks"]
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
+
+# Initialize Filters
+register_filters(app)
 
 # Limit Extensions
 def allowed_file(filename):
@@ -38,10 +55,40 @@ def full_location(location):
     # Filter out any None or empty strings and join with commas
     return ", ".join(str(p) for p in parts if p)
 
-app = Flask(__name__)
+# Loads Current User On Each Page Load
+@app.before_request
+def load_current_user():
+    g.current_user = None
+    uid = session.get("UserID")
+    if uid is not None:
+        g.current_user = get_one(Account, UserID=uid)
+
+# Login Required Decorator
+def login_required(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        if not session.get("UserID"):
+            return redirect(url_for("login", next=request.path))
+        return f(*args, **kwargs)
+    return wrapper
+
+def guest_required(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        if session.get("UserID"):
+            return redirect(url_for("restaurant_page"))
+        return f(*args, **kwargs)
+    return wrapper
+    
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for('home'))
+
 
 # Home page: BookIt Welcome
 @app.route('/')
+@guest_required
 def home():
     return render_template('bookit-welcome.html')
 
@@ -52,6 +99,7 @@ def error():
     return render_template('error.html', errors=errors)
 
 @app.route('/createaccount', methods=["GET", "POST"])
+@guest_required
 def createaccount():
     error: str = None
     is_valid: bool = False
@@ -59,7 +107,7 @@ def createaccount():
     if request.method == 'POST':
         # Make A Location
         
-        session = get_session()
+        PGsession = get_session()
         
         location_data: dict = {}
 
@@ -72,25 +120,26 @@ def createaccount():
         newLocation = Location(**location_data)
         
         try:
-            session.add(newLocation)
-            session.flush()
+            PGsession.add(newLocation)
+            PGsession.flush()
             location_id = newLocation.LocationID
-            session.commit()
+            PGsession.commit()
             valid_location = True
         except Exception as e:
                 logging.error(f"An error has occurred: {e}")
                 return redirect(url_for('error', errors=str(e)))
+        finally:
+            PGsession.close()
         # Make A User
         FirstName=request.form["FirstName"].upper()
         LastName=request.form["LastName"].upper()
         PhoneNumber=request.form["PhoneNumber"]
-        Email=request.form["Email"].lower()
 
         if FirstName.isalpha() and LastName.isalpha() and PhoneNumber.isnumeric() and len(PhoneNumber) == 10:
-            print(f"Inputs {FirstName}, {LastName}, and {PhoneNumber} are valid.")
+            logging.info(f"Inputs {FirstName}, {LastName}, and {PhoneNumber} are valid.")
             is_valid = True
         elif not FirstName.isalpha():
-            print(f"Input: {FirstName} is Invalid")
+            logging.info(f"Input: {FirstName} is Invalid")
             #error = error_msg
 
         if is_valid and valid_location:
@@ -120,14 +169,22 @@ def createaccount():
 
             try:
                 if not get_one(Account, Email=user_data['Email']):
-                    insert(Account(**user_data))
+                    newUser = insert(Account(**user_data))
                 else:
                     return redirect(url_for('error', errors="Already An Account With This Email"))
             except Exception as e:
                 logging.error(f"An error has occurred: {e}")
                 return redirect(url_for('error', errors=str(e)))
             
-            return redirect(url_for('home'))
+            # Clear all Cookies and Add Account ID to Session
+            session.clear()
+            session.permanent = True
+            session['UserID'] = newUser.UserID
+            
+            # Additional Logging Info
+            logging.info(f"User {newUser.UserID} created successfully.")
+            
+            return redirect(url_for('restaurant_page'))
 
     return render_template('createaccount.html')
 
@@ -160,7 +217,9 @@ def delete():
             error = "An error occured. Please try again"
     return render_template("delete.html", error=error, message=message)
 
+#Login Page
 @app.route('/login', methods=["GET", "POST"])
+@guest_required
 def login():
     if request.method == 'POST':
         try:
@@ -173,7 +232,15 @@ def login():
             stored_hash_bytes = codecs.decode(stored_hash_hex.replace("\\x", ""), "hex")
 
             if bcrypt.checkpw(userPw, stored_hash_bytes):
-                return redirect(url_for('home'))
+                # Clear all Cookies and Add Account ID to Session
+                session.clear()
+                session.permanent = True
+                session['UserID'] = attempted_user.UserID
+                
+                # Additional Logging Info
+                logging.info(f"User {attempted_user.Email} logged in successfully.")
+                
+                return redirect(url_for('restaurant_page'))
             else:
                 logging.error(f"Wrong Password")
         except Exception as e:
@@ -184,6 +251,7 @@ def login():
 
 # General Events Page
 @app.route('/event')
+@login_required
 def eventpage():
     return render_template('bookit-eventpage.html', api_key=api_key)
 
@@ -194,19 +262,16 @@ def events(event_id):
 
 # Restaurant Overview
 @app.route('/restaurant')
+@login_required
 def restaurant_page():
     session = get_session()
     restaurants = session.query(RestaurantInfo).all()
     session.close()
     return render_template('bookit-restaurant.html', restaurants=restaurants, api_key=api_key)
 
-# Dollar Filter for Formatting
-@app.template_filter('dollars')
-def dollars(value):
-    return f"${value:,.2f}"
-
 # Individual Restaurant Page
 @app.route('/restaurant/<string:name>')
+@login_required
 def restaurant(name):
     session = get_session()    
     restaurant = session.query(RestaurantInfo).filter_by(Name=name).first()
@@ -226,6 +291,7 @@ def restaurant(name):
 
 # Reservation Page
 @app.route('/reservation', methods=['GET', 'POST'])
+@login_required
 def reservation():
     if request.method == 'POST':
         # Access form data
@@ -246,6 +312,51 @@ def reservation():
 
     # GET request: render the reservation page
     return render_template('bookit-reservepage.html')
+
+# Profile Page
+@app.route('/profile')
+@login_required
+def profile():
+    user = g.current_user
+    return render_template('profile.html', user=user)
+
+cuisine_list = ['Italian', 'Chinese', 'Mexican', 'Indian', 'French', 'Japanese', 'Mediterranean', 'Thai', 'Spanish', 'Greek']
+
+@app.route('/restaurantform', methods=['GET', 'POST'])
+@login_required
+def restaurant_form():
+    error = None
+    message = None
+    if request.method == 'POST':
+        try:
+            # Fields are UserID, LocationID, Name, Description PhoneNumber, Cuisine, Capacity, Fee
+            user_id = g.current_user.UserID
+            name = request.form.get('Name')
+            description = request.form.get('Description')
+            phone_number = request.form.get('PhoneNumber')
+            cuisine = request.form.get('Cuisine')
+            capacity = int(request.form.get('Capacity'))
+            fee = int(request.form.get('Fee'))
+            # Create a default location for now
+            default_location = Location(StreetName="123 Default St", City="DefaultCity", State="DS", ZipCode="00000")
+            inserted_location = insert(default_location)
+            location_id = inserted_location.LocationID
+            new_restaurant = RestaurantInfo(
+                UserID=user_id,
+                LocationID=location_id,
+                Name=name,
+                Description=description,
+                PhoneNumber=phone_number,
+                Cuisine=cuisine,
+                Capacity=capacity,
+                Fee=fee
+            )
+            insert(new_restaurant)
+            message = "Restaurant added successfully!"
+        except Exception as e:
+            logging.error(f"Error adding restaurant: {e}")
+            error = "An error occurred while adding the restaurant."
+    return render_template("bookit-restaurant-form.html", error=error, message=message, cuisines=cuisine_list)
 
 # TESTING STUFF DELETE LATER
 @app.route('/test')

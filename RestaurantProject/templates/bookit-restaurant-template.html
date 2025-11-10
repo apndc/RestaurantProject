@@ -1,23 +1,9 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BookIt - {{ restaurant.Name }}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
-    <!-- Header -->
-    <header class="header">
-        <a href="{{ url_for('home') }}" class="logo">🍽️ BookIt</a>
-        <div class="logo">
-            <h1>{{ restaurant.Name }}</h1>
-        </div>
-    </header>
-
-    <!-- Restaurant Info Section -->
-    <main class="restaurant-container">
+{% extends "header.html" %}
+{% block title %}BookIt — {{ restaurant.Name }} {% endblock %}
+{% block content %}
+    <div class="restaurant-card">
         <!-- Restaurant Image and Name -->
+         <h1 class="restaurant-title">{{ restaurant.Name }}</h1>
         <section class="restaurant-header">
             <img src="{{ url_for('static', filename='assets/restaurant-placeholder.jpg') }}" alt="Restaurant Image" class="restaurant-image">
             <h2 class="restaurant-name">{{ restaurant.Description }}</h2>
@@ -53,8 +39,7 @@
             </div>
         </section>
         <section class="backButton">
-            <a href="/restaurant"><button>Return To Restaurant View</button></a>
+            <a href="/restaurant"><button style="text-align: center;">Return To Restaurant View</button></a>
         </section>
-    </main>
-</body>
-</html>
+    </div>
+{% endblock %}

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from db.server import Base
 
@@ -19,8 +19,9 @@ class Reservation(Base):
 
     #Other info in table 
     NumberOfGuests = Column(Integer)
-    Time = Column(String(5))
+    #Date + Time of Reservation
+    Date = Column(DateTime, nullable=False)
 
     def __repr__(self):
         return f""" Reservation ID: {self.ReservationID}, User ID: {self.UserID}, Restaurant ID: {self.RID}, Number of Guests: {self.NumberOfGuests}, 
-        Time: {self.Time}"""
+        Date: {self.Date}"""

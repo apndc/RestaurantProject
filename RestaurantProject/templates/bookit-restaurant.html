@@ -1,50 +1,31 @@
-<!-- templates/bookit-restaurant.html -->
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BookIt - Restaurants</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <script defer src="/static/google-maps-functions.js"></script>
-    <script defer
-        src="https://maps.googleapis.com/maps/api/js?key={{ api_key }}&libraries=places&callback=initMap"
-        loading="async">
-    </script>
-</head>
-<body>
-    <!-- Header -->
-    <header class="header">
-        <a href="{{ url_for('home') }}" class="logo">🍽️ BookIt</a>
-    </header>
-
-    <!-- Restaurant Info Section -->
-    <main class="restaurant-container">
-        <!-- Restaurant Image and Name -->
-        <section class="restaurant-header"> 
-            <img src="{{ url_for('static', filename='assets/restaurant-placeholder.jpg') }}" alt="Restaurant Image" class="restaurant-image">
-            <h2 class="restaurant-name">Pick Your Restaurant!!</h2>
-        </section>
-        
+{% extends "header.html" %}
+{% block title %}BookIt — Restaurants{% endblock %}
+{% block content %}
+<div class="restaurant-container">
+    <!-- Restaurant Image and Name -->
+    <section class="restaurant-header"> 
+        <img src="{{ url_for('static', filename='assets/restaurant-placeholder.jpg') }}" alt="Restaurant Image" class="restaurant-image">
+        <h2 class="restaurant-name">Pick Your Restaurant!!</h2>
+    </section>
+    
+    <br>
+    <!--
+    <button id="useLocBtn">Use My Location</button>
+    <div id="map" style="height: 500px; width: 100%;"></div>
+    -->
+    
+    <section class="restaurant-card">
+        <!-- TODO: Make 'restaurant-details-menu' a Box with (maybe) 
+                The Restaurant Image with The Name Under It-->
+        {% for restaurant in restaurants %}
+        <a href="{{ url_for('restaurant', name=restaurant.Name) }}">
+            <button>
+                {{restaurant.Name}}
+                <!-- Insert Distance -->
+            </button>
+        </a>
         <br>
-        <!--
-        <button id="useLocBtn">Use My Location</button>
-        <div id="map" style="height: 500px; width: 100%;"></div>
-        -->
-        
-        <section class="restaurant-card">
-            <!-- TODO: Make 'restaurant-details-menu' a Box with (maybe) 
-                 The Restaurant Image with The Name Under It-->
-            {% for restaurant in restaurants %}
-            <a href="{{ url_for('restaurant', name=restaurant.Name) }}">
-                <button>
-                    {{restaurant.Name}}
-                    <!-- Insert Distance -->
-                </button>
-            </a>
-            <br>
-            {% endfor %}
-        </section>
-    </main>
-</body>
-</html>
+        {% endfor %}
+    </section>
+</div>
+{% endblock %}

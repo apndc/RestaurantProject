@@ -6,6 +6,7 @@
   --white: #fff;
   --gray: #666;
   --black: #000;
+  --gold: #bba36b;
 }
 
 *,
@@ -186,6 +187,14 @@ footer a {
   text-decoration: underline;
 }
 
+.restaurant-title {
+  color: var(--gold);
+  font-size: 2rem;
+  text-align: center;
+  margin-bottom: 1rem;
+  text-shadow: #000 0px 1px 2px;
+}
+
 .restaurant-card {
   border: 1px solid #ddd;
   padding: 15px;
@@ -314,4 +323,16 @@ footer a {
 
 .welcome_page .button:hover {
   background: #5c431e;
+}
+
+.logoutLink {
+  text-decoration: underline;
+  color: var(--brown);
+}
+
+select {
+  width: auto;
+  padding: 0.5rem;
+  border-radius: 5px;
+  border: 1px solid #ccc;
 }
