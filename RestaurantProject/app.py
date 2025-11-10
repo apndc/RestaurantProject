@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, url_for, redirect
 import os, bcrypt, logging
 from sqlalchemy.orm import joinedload
 from dotenv import load_dotenv
+from RestaurantProject.db.schema import EP_Verification, RO_Verification
 from db.server import get_session
 from db.query import *
 from db.schema import *
@@ -80,55 +81,71 @@ def createaccount():
         except Exception as e:
                 logging.error(f"An error has occurred: {e}")
                 return redirect(url_for('error', errors=str(e)))
-        # Make A User
+            
+        # Validate user info
         FirstName=request.form["FirstName"].upper()
         LastName=request.form["LastName"].upper()
-        PhoneNumber=request.form["PhoneNumber"]
+        PhoneNumber=request.form["PhoneNumber"].replace("-", "")
         Email=request.form["Email"].lower()
+        Password=request.form["Password"]
+        role=request.form["Role"].upper()
 
-        if FirstName.isalpha() and LastName.isalpha() and PhoneNumber.isnumeric() and len(PhoneNumber) == 10:
-            print(f"Inputs {FirstName}, {LastName}, and {PhoneNumber} are valid.")
-            is_valid = True
-        elif not FirstName.isalpha():
-            print(f"Input: {FirstName} is Invalid")
-            #error = error_msg
+        if not (FirstName.isalpha() and LastName.isalpha()):
+            return redirect(url_for('error', errors="Invalid name"))
+        if not (PhoneNumber.isnumeric() and len(PhoneNumber) == 10):
+            return redirect(url_for('error', errors="Invalid phone number"))
 
-        if is_valid and valid_location:
+        # --- Step 3: Role verification for EP/RO ---
+        if role in ['EVENT_PLANNER', 'RESTAURANT_OWNER']:
+            verification_email = request.form.get('verification_email', '').lower().strip()
+            verification_code = request.form.get('verification_code', '').strip()
 
-            user_data: dict = {}
+            if role == 'EVENT_PLANNER':
+                record = session.query(EP_Verification).filter_by(
+                    email=verification_email, verification_code=verification_code
+                ).first()
+            else:  # RESTAURANT_OWNER
+                record = session.query(RO_Verification).filter_by(
+                    email=verification_email, verification_code=verification_code
+                ).first()
 
-            user_data['LocationID'] = location_id
+            if not record:
+                return redirect(url_for('error', errors='Invalid verification credentials'))
 
-            for key, value in request.form.items():
-                if key == 'FirstName' or key == 'LastName' or key == 'Role':
-                    user_data[key] = value.strip().upper()
-                elif key == 'Email':
-                    user_data[key] = value.strip().lower()
-                elif key == 'PhoneNumber':
-                    user_data[key] = value.strip().replace("-", "")
-                elif key == 'Password':
-                    user_data[key] = value.strip()
-            
-            # converting password to array of bytes
-            bytes = user_data['Password'].encode('utf-8')
+        # --- Step 4: Hash password ---
+        pw_bytes = Password.encode('utf-8')
+        salt = bcrypt.gensalt()
+        hashed_pw = bcrypt.hashpw(pw_bytes, salt)
 
-            # generating the salt
-            salt = bcrypt.gensalt()
+        # --- Step 5: Insert user ---
+        user_data = {
+            'FirstName': FirstName,
+            'LastName': LastName,
+            'PhoneNumber': PhoneNumber,
+            'Email': Email,
+            'Password': hashed_pw,
+            'Role': role,
+            'LocationID': location_id
+        }
 
-            # Hashing the password
-            user_data['Password'] = bcrypt.hashpw(bytes, salt)
+        try:
+            if not get_one(Account, Email=Email):
+                insert(Account(**user_data))
+            else:
+                return redirect(url_for('error', errors="An account with this email already exists"))
+        except Exception as e:
+            logging.error(f"User creation error: {e}")
+            return redirect(url_for('error', errors=str(e)))
 
-            try:
-                if not get_one(Account, Email=user_data['Email']):
-                    insert(Account(**user_data))
-                else:
-                    return redirect(url_for('error', errors="Already An Account With This Email"))
-            except Exception as e:
-                logging.error(f"An error has occurred: {e}")
-                return redirect(url_for('error', errors=str(e)))
-            
+        # --- Step 6: Role-based redirect ---
+        if role == 'EVENT_PLANNER':
+            return redirect(url_for('eventplanner_page'))
+        elif role == 'RESTAURANT_OWNER':
+            return redirect(url_for('restaurant_page'))  # Or a dedicated RO dashboard
+        else:
             return redirect(url_for('home'))
 
+    # GET request: render signup page
     return render_template('createaccount.html')
 
 #Delete SQL

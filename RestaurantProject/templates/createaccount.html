@@ -1,89 +1,122 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>🍽️ BookIt Sign Up Page</title>
-        <link rel="stylesheet" href="/static/style.css">
-    </head>
+<head>
+    <title>🍽️ BookIt Sign Up Page</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
 
-    <header>
-        <a href="{{ url_for('home') }}" class="logo">🍽️ BookIt</a>
-    </header>
-    <body>
-        <main class="sign_page">
+<header>
+    <a href="{{ url_for('home') }}" class="logo">🍽️ BookIt</a>
+</header>
+
+<body>
+    <main class="sign_page">
         <section class="sign_page">
-        <h1>Sign Up</h1>
-        <form method="post" action="/createaccount" class="form-grid">
-        <div class="form-grid two-col">
-            <div>
-                <label for="FirstName">First Name:</label>
-                <input type="text" id="FirstName" name="FirstName" value="" required/>
-            </div>
-            
-            <div>
-                <label for="LastName">Last Name:</label>
-                <input type="text" id="LastName" name="LastName" value="" required/> 
-            </div>
-        </div>
+            <h1>Sign Up</h1>
+            <form method="post" action="/createaccount" class="form-grid">
 
-    <div class="form-grid two-col">
-            <div>
-                <label for="Email">Email:</label>
-                <input type="email" id="Email" name="Email" value="" required/>
-            </div>
+                <!-- First and Last Name -->
+                <div class="form-grid two-col">
+                    <div>
+                        <label for="FirstName">First Name:</label>
+                        <input type="text" id="FirstName" name="FirstName" value="" required/>
+                    </div>
+                    
+                    <div>
+                        <label for="LastName">Last Name:</label>
+                        <input type="text" id="LastName" name="LastName" value="" required/> 
+                    </div>
+                </div>
 
-            <div>
-                <label for="PhoneNumber">Phone Number: </label>
-                <input type="tel" id="PhoneNumber" name="PhoneNumber" value="" pattern="[0-9]{10}" />
-            </div>
-    </div>
+                <!-- Email and Phone -->
+                <div class="form-grid two-col">
+                    <div>
+                        <label for="Email">Email:</label>
+                        <input type="email" id="Email" name="Email" value="" required/>
+                    </div>
 
-    <div class="form-grid two-col">
-        <div>
-        <label for="StreetName">Street Name:</label>
-        <input type="text" id="StreetName" name="StreetName" value="" required/>
-        </div>
+                    <div>
+                        <label for="PhoneNumber">Phone Number: </label>
+                        <input type="tel" id="PhoneNumber" name="PhoneNumber" value="" pattern="[0-9]{10}" />
+                    </div>
+                </div>
 
-        <div>
-        <label for="City">City:</label>
-        <input type="text" id="City" name="City" value="" required/> 
-        </div>
-    </div>
+                <!-- Street and City -->
+                <div class="form-grid two-col">
+                    <div>
+                        <label for="StreetName">Street Name:</label>
+                        <input type="text" id="StreetName" name="StreetName" value="" required/>
+                    </div>
 
-    <div class="form-grid two-col">
-        <div>
-            <label for="State">State:</label>
-            <input type="text" id="State" name="State" value="" required/>
-        </div>
+                    <div>
+                        <label for="City">City:</label>
+                        <input type="text" id="City" name="City" value="" required/> 
+                    </div>
+                </div>
 
-        <div>
-            <label for="ZipCode">Zip Code:</label>
-            <input type="text" id="ZipCode" name="ZipCode" value="" required/> 
-        </div>
-    </div>
-        
-    <div class="form-grid two-col">
-        <!--
-        <div>
-            <label for="Birthday">Birthday: </label>
-            <input type="text" id="Birthday" name="Birthday" value="" required/> 
-        </div>
-        -->
-    </div>
+                <!-- State and Zip -->
+                <div class="form-grid two-col">
+                    <div>
+                        <label for="State">State:</label>
+                        <input type="text" id="State" name="State" value="" required/>
+                    </div>
 
-    <div class="form-grid two-col">
-        <div>
-            <label for="Password">Password:</label>
-            <input type="password" id="Password" name="Password">
-        </div>
+                    <div>
+                        <label for="ZipCode">Zip Code:</label>
+                        <input type="text" id="ZipCode" name="ZipCode" value="" required/> 
+                    </div>
+                </div>
 
-        <div>
-            <input type="submit" value="Submit"> 
-        </div>
-    </div>
-    <br>
+                <!-- Role Selection -->
+                <div class="form-grid two-col">
+                    <label>Role:</label>
+                    <div>
+                        <label><input type="radio" name="Role" value="CUSTOMER" checked> Customer</label>
+                        <label><input type="radio" name="Role" value="EVENT_PLANNER"> Event Planner</label>
+                        <label><input type="radio" name="Role" value="RESTAURANT_OWNER"> Restaurant Owner</label>
+                    </div>
+                </div>
 
-        </form>     
-        <a href="/">
-            <button type="button" id="home">Home</button>
-        </a>
-    </body>
+                <!-- Verification Modal -->
+                <div id="verificationModal" style="display:none; margin-top:10px; border:1px solid #ccc; padding:10px;">
+                    <h3>Enter Verification Credentials</h3>
+                    <input type="email" name="verification_email" placeholder="Verification Email" required>
+                    <input type="text" name="verification_code" placeholder="Verification Code" required>
+                </div>
+
+                <!-- Password and Submit -->
+                <div class="form-grid two-col">
+                    <div>
+                        <label for="Password">Password:</label>
+                        <input type="password" id="Password" name="Password" required>
+                    </div>
+
+                    <div>
+                        <input type="submit" value="Submit"> 
+                    </div>
+                </div>
+
+            </form>     
+
+            <a href="/"><button type="button" id="home">Home</button></a>
+
+        </section>
+    </main>
+
+    <!-- Script to show/hide verification modal -->
+    <script>
+        const roleRadios = document.querySelectorAll('input[name="Role"]');
+        const modal = document.getElementById('verificationModal');
+
+        roleRadios.forEach(radio => {
+            radio.addEventListener('change', () => {
+                if(radio.value === 'EVENT_PLANNER' || radio.value === 'RESTAURANT_OWNER'){
+                    modal.style.display = 'block';
+                } else {
+                    modal.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
