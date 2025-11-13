@@ -295,6 +295,12 @@ footer a {
 .welcome_page p {
   color: var(--black);
   font-size: 1.8rem;
+  margin-bottom: 0.5rem;
+}
+
+.welcome_page p2 {
+  color: var(--black);
+  font-size: 1.8rem;
   margin-bottom: 1.5rem;
 }
 
@@ -314,4 +320,56 @@ footer a {
 
 .welcome_page .button:hover {
   background: #5c431e;
+}
+
+.header_right .user_link{
+  color: var(--brown);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+
+.res_list {display: grid; gap: 1.5rem;}
+
+
+.res_item{
+  background: #f8f7f3;
+  border: 1px solid #eadfbf;
+  border-radius: 5px;
+  padding: .5rem .6rem;
+  display: grid;
+  gap: 1.5rem;
+}
+
+
+.res_date{
+  font-weight: 600;
+}
+
+
+.res_destination{
+  color:var(--brown);
+}
+
+
+.res_size{
+  font-size: 0.9rem; color: var(--gray);
+}
+
+
+.cuisine_gird{
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 1.5rem;
+}
+
+
+.cuisine_card{
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--tan);
+  border-radius: 10px;
+  background: #fff;
+  padding: 1rem;
+  text-decoration: none;
 }

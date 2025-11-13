@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, url_for, redirect
+from flask import Flask, render_template, request, url_for, redirect, session
 import os, bcrypt, logging
 from sqlalchemy.orm import joinedload
 from dotenv import load_dotenv
@@ -7,9 +7,15 @@ from db.query import *
 from db.schema import *
 from werkzeug.utils import secure_filename
 from collections import defaultdict
+from datetime import datetime, timedelta
+from functools import wraps
 load_dotenv()
 
-api_key = os.environ["GOOGLE_API_KEY"]
+os.makedirs("logs", exist_ok=True)
+
+app = Flask(__name__)
+app.secret_key = os.environ.get("SECRET_KEY", "dev-key-chnange-me")
+api_key = os.environ.get("GOOGLE_API_KEY", "")
 
 # Setup for Logger
 logging.basicConfig( 
@@ -38,8 +44,6 @@ def full_location(location):
     # Filter out any None or empty strings and join with commas
     return ", ".join(str(p) for p in parts if p)
 
-app = Flask(__name__)
-
 # Home page: BookIt Welcome
 @app.route('/')
 def home():
@@ -59,7 +63,7 @@ def createaccount():
     if request.method == 'POST':
         # Make A Location
         
-        session = get_session()
+        db = get_session()
         
         location_data: dict = {}
 
@@ -72,10 +76,10 @@ def createaccount():
         newLocation = Location(**location_data)
         
         try:
-            session.add(newLocation)
-            session.flush()
+            db.add(newLocation)
+            db.flush()
             location_id = newLocation.LocationID
-            session.commit()
+            db.commit()
             valid_location = True
         except Exception as e:
                 logging.error(f"An error has occurred: {e}")
@@ -158,6 +162,8 @@ def delete():
         except Exception as e:
             logging.error(f"Error deleting user:, {e}")
             error = "An error occured. Please try again"
+        finally:
+            db.close()
     return render_template("delete.html", error=error, message=message)
 
 @app.route('/login', methods=["GET", "POST"])
@@ -173,7 +179,8 @@ def login():
             stored_hash_bytes = codecs.decode(stored_hash_hex.replace("\\x", ""), "hex")
 
             if bcrypt.checkpw(userPw, stored_hash_bytes):
-                return redirect(url_for('home'))
+                session['user_email'] = attempted_user.Email
+                return redirect(url_for('user_landing'))
             else:
                 logging.error(f"Wrong Password")
         except Exception as e:
@@ -181,6 +188,37 @@ def login():
             return redirect(url_for('login'))
         
     return render_template('login.html')
+
+@app.route('/profile')
+def profile():
+    # You can expand this later with user info
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    return render_template('profile.html', user_name=session.get('user_name'))
+
+@app.route('/landing')
+def user_landing():
+    db = get_session()
+
+    try: 
+        upcoming = []
+        try:
+            upcoming = (
+                db.query(Reservation).options(joinedload(Reservation.restaurant)).filter(Reservation.AccountID == session['user_id'], Reservation.DateTime >= datetime.utcnow())
+                .order_by(Reservation.DateTime.asc()).limit(5).all()
+            )
+        except Exception:
+            upcoming = []
+        
+        cuisines = ["Italian" , "Chinese", "American", "BBQ", "Mexican"]
+        return render_template(
+            'user_landing.html', api_key=api_key,
+            user_name = session.get('user_name'), cuisines = cuisines, upcoming = upcoming
+        )
+
+    finally:
+        db.close()
 
 # General Events Page
 @app.route('/event')
@@ -195,9 +233,9 @@ def events(event_id):
 # Restaurant Overview
 @app.route('/restaurant')
 def restaurant_page():
-    session = get_session()
-    restaurants = session.query(RestaurantInfo).all()
-    session.close()
+    db = get_session()
+    restaurants = db.query(RestaurantInfo).all()
+    db.close()
     return render_template('bookit-restaurant.html', restaurants=restaurants, api_key=api_key)
 
 # Dollar Filter for Formatting
@@ -208,8 +246,8 @@ def dollars(value):
 # Individual Restaurant Page
 @app.route('/restaurant/<string:name>')
 def restaurant(name):
-    session = get_session()    
-    restaurant = session.query(RestaurantInfo).filter_by(Name=name).first()
+    db = get_session()    
+    restaurant = db.query(RestaurantInfo).filter_by(Name=name).first()
     location = restaurant.location
     fullLocation = full_location(location)
     menuItems = restaurant.menu
@@ -221,7 +259,7 @@ def restaurant(name):
     html = render_template('bookit-restaurant-template.html',
                        restaurant=restaurant, location=location, menuItems=menuItems,
                          categories=sorted_categories, fullLocation=fullLocation)
-    session.close()
+    db.close()
     return html
 
 # Reservation Page
