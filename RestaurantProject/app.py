@@ -1,8 +1,5 @@
-landing
 from flask import Flask, render_template, request, url_for, redirect, session
-
 from flask import Flask, render_template, request, session, url_for, redirect
-main
 import os, bcrypt, logging
 from sqlalchemy import func
 from sqlalchemy.orm import joinedload
@@ -205,8 +202,7 @@ def login():
             stored_hash_hex = attempted_user.Password
             stored_hash_bytes = codecs.decode(stored_hash_hex.replace("\\x", ""), "hex")
 
-landing
-            if bcrypt.checkpw(userPw, stored_hash_bytes):
+            if bcrypt.checkpw(password, stored_hash_bytes):
                 session['user_email'] = attempted_user.Email
                 return redirect(url_for('user_landing'))
             # Validate password
@@ -225,7 +221,6 @@ landing
                 else:
                     logging.warning(f"{email} has unknown role '{attempted_user.Role}'. Redirecting home.")
                     return redirect(url_for('home'))
-main
             else:
                 logging.error("Incorrect password.")
                 return redirect(url_for('login'))
