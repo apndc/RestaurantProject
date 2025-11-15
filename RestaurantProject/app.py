@@ -239,8 +239,11 @@ def login():
             elif role == "restaurant_owner":
                 return redirect(url_for("restaurant_page"))
 
+            elif role == "customer":
+                return redirect(url_for("user_landing"))
+           
             else:
-                return redirect(url_for("landing"))
+                return redirect(url_for("home"))
 
         except Exception as e:
             logging.exception(f"Login error: {e}")
