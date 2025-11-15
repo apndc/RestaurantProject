@@ -160,7 +160,7 @@ def createaccount():
             return redirect(url_for("restaurant_page"))
         else:
             #default = normal customer
-            return redirect(url_for("landing"))
+            return redirect(url_for("user_landing"))
         
     # GET request: render signup page
     return render_template('createaccount.html')
