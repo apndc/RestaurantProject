@@ -80,7 +80,7 @@
                 <!-- Verification Modal -->
                 <div id="verificationModal" style="display:none; margin-top:10px; border:1px solid #ccc; padding:10px;">
                     <h3>Enter Verification Credentials</h3>
-                    <input type="text" name="verification_code" placeholder="Verification Code" required>
+                    <input type="text" name="verification_code" placeholder="Verification Code">
                 </div>
 
                 <!-- Error Modal -->
@@ -134,8 +134,10 @@
         radio.addEventListener('change', () => {
             if(radio.value === 'EVENT_PLANNER' || radio.value === 'RESTAURANT_OWNER'){
                 modal.style.display = 'block';
+                document.querySelector('input[name="verification_code"]').setAttribute("required", true);
             } else {
                 modal.style.display = 'none';
+                document.querySelector('input[name="verification_code"]').removeAttribute("required");
             }
         });
     });

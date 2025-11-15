@@ -90,7 +90,7 @@ def createaccount():
         PhoneNumber = request.form["PhoneNumber"].replace("-", "")
         Email = request.form["Email"].lower()
         Password = request.form["Password"]
-        role = request.form["Role"].upper()
+        role = request.form.get("Role", "").upper()
 
         # --- Step 1: Name validation ---
         name_pattern = re.compile(r"^[A-Za-z'-]+$")
@@ -159,6 +159,7 @@ def createaccount():
         elif role == "RESTAURANT_OWNER":
             return redirect(url_for("restaurant_page"))
         else:
+            #default = normal customer
             return redirect(url_for("landing"))
         
     # GET request: render signup page
