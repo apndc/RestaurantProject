@@ -149,7 +149,7 @@ def createaccount():
         
         # Retrieve user & set session for the 'login' route
         user = get_one(Account, Email=Email)
-        session["user_id"] = user.AccountID
+        session["user_id"] = user.UserID
         session["user_email"] = user.Email
         session["user_name"] = f"{user.FirstName} {user.LastName}"
 
@@ -218,7 +218,7 @@ def login():
                 return redirect(url_for('login'))
             
             # Login successful >> Set session
-            session['user_id'] = attempted_user.AccountID
+            session['user_id'] = attempted_user.UserID
             session['user_email'] = attempted_user.Email
             session['user_name'] = f"{attempted_user.FirstName} {attempted_user.LastName}"
             
@@ -255,7 +255,7 @@ def user_landing():
         upcoming = []
         try:
             upcoming = (
-                db.query(Reservation).options(joinedload(Reservation.restaurant)).filter(Reservation.AccountID == session['user_id'], Reservation.DateTime >= datetime.utcnow())
+                db.query(Reservation).options(joinedload(Reservation.restaurant)).filter(Reservation.UserID == session['user_id'], Reservation.DateTime >= datetime.utcnow())
                 .order_by(Reservation.DateTime.asc()).limit(5).all()
             )
         except Exception:
