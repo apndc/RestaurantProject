@@ -97,10 +97,12 @@ def createaccount():
         role=request.form["Role"].upper()
 
         if not (FirstName.isalpha() and LastName.isalpha()):
-            return redirect(url_for('error', errors="Invalid name"))
+            error = "INVALID NAME"
+            return redirect('createaccount.html', error=error)
         if not (PhoneNumber.isnumeric() and len(PhoneNumber) == 10):
-            return redirect(url_for('error', errors="Invalid phone number"))
-
+            error = "INVALID PHONE NUMBER"
+            return redirect('createaccount.html', error=error)
+            
         # --- Step 3: Role verification for EP/RO ---
         if role in ['EVENT_PLANNER', 'RESTAURANT_OWNER']:
             verification_code = request.form.get('verification_code', '').strip().lower()
@@ -115,7 +117,9 @@ def createaccount():
                 ).first()
 
             if not record:
-                return redirect(url_for('error', errors='Invalid verification credentials'))
+                error = "INVALID VERIFICATION CREDENTIALS"
+                return redirect('createaccount.html', error=error)
+               
 
         # --- Step 4: Hash password ---
         pw_bytes = Password.encode('utf-8')
@@ -137,7 +141,8 @@ def createaccount():
             if not get_one(Account, Email=Email):
                 insert(Account(**user_data))
             else:
-                return redirect(url_for('error', errors="An account with this email already exists"))
+                error = "An account with this email already exists"
+                return redirect('createaccount.html', error=error)
         except Exception as e:
             logging.error(f"User creation error: {e}")
             return redirect(url_for('error', errors=str(e)))
