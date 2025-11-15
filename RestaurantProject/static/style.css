@@ -280,10 +280,10 @@ footer a {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   text-align: center;
-  height: 55vh;
   margin: 0 auto;
+  padding: 40px 20px;
+  max-width: 900px;
 }
 
 .welcome_page h1 {
@@ -295,13 +295,14 @@ footer a {
 .welcome_page p {
   color: var(--black);
   font-size: 1.8rem;
-  margin-bottom: 0.5rem;
+  margin-bottom: 1.2rem; /* slightly more space */
+  line-height: 1.6; /* makes long text easier to read */
 }
 
-.welcome_page p2 {
-  color: var(--black);
-  font-size: 1.8rem;
-  margin-bottom: 1.5rem;
+.welcome_page .goal-text {
+  max-width: 800px;
+  text-align: left;
+  line-height: 1.6;
 }
 
 .welcome_page .links {
