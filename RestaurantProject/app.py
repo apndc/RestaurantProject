@@ -60,65 +60,67 @@ def error():
 
 @app.route('/createaccount', methods=["GET", "POST"])
 def createaccount():
-    error: str = None
-    is_valid: bool = False
+    import re
+    error = None
 
-    if request.method == 'POST':
-        # Make A Location
-        
+    if request.method == "POST":
         db = get_session()
-        
-        location_data: dict = {}
 
-        valid_location = False
-        
-        for key, value in request.form.items():
-            if key == 'StreetName' or key == 'City' or key == 'State' or key == 'ZipCode':
-                location_data[key] = value.strip()
-        
+        # Save Location
+        location_data = {
+        key: value.strip()
+        for key, value in request.form.items()
+        if key in ['StreetName', 'City', 'State', 'ZipCode']
+        }
+
         newLocation = Location(**location_data)
-        
+
         try:
             db.add(newLocation)
             db.flush()
             location_id = newLocation.LocationID
             db.commit()
-            valid_location = True
         except Exception as e:
-                logging.error(f"An error has occurred: {e}")
-                return redirect(url_for('error', errors=str(e)))
+            logging.error(f"Location creation error: {e}")
+            return redirect(url_for('error', errors=str(e))), errors=str(e)))
             
         # Validate user info
-        FirstName=request.form["FirstName"].upper()
-        LastName=request.form["LastName"].upper()
-        PhoneNumber=request.form["PhoneNumber"].replace("-", "")
-        Email=request.form["Email"].lower()
-        Password=request.form["Password"]
-        role=request.form["Role"].upper()
+        FirstName = request.form["FirstName"].strip()
+        LastName = request.form["LastName"].strip()
+        PhoneNumber = request.form["PhoneNumber"].replace("-", "")
+        Email = request.form["Email"].lower()
+        Password = request.form["Password"]
+        role = request.form["Role"].upper()
 
-        if not (FirstName.isalpha() and LastName.isalpha()):
+        # --- Step 1: Name validation ---
+        name_pattern = re.compile(r"^[A-Za-z'-]+$")
+
+        if not (name_pattern.match(FirstName) and name_pattern.match(LastName)):
             error = "INVALID NAME"
-            return render_template('createaccount.html', error=error)
+            return render_template("createaccount.html", error=error)
+
+        # --- Step 2: Phone validation ---
         if not (PhoneNumber.isnumeric() and len(PhoneNumber) == 10):
             error = "INVALID PHONE NUMBER"
-            return render_template('createaccount.html', error=error)
+            return render_template("createaccount.html", error=error)
             
         # --- Step 3: Role verification for EP/RO ---
         if role in ['EVENT_PLANNER', 'RESTAURANT_OWNER']:
-            verification_code = request.form.get('verification_code', '').strip().lower()
+            verification_code = request.form.get("verification_code", "").strip().lower()
 
             if role == 'EVENT_PLANNER':
                 record = db.query(EP_Verification).filter(
-                    func.lower(EP_Verification.verification_code)==verification_code
+                    func.lower(EP_Verification.verification_code) == verification_code
                 ).first()
-            else:  # RESTAURANT_OWNER
+
+            else:
                 record = db.query(RO_Verification).filter(
-                    func.lower(RO_Verification.verification_code)==verification_code
+                    func.lower(RO_Verification.verification_code) == verification_code
                 ).first()
 
             if not record:
                 error = "INVALID VERIFICATION CREDENTIALS"
-                return render_template('createaccount.html', error=error)
+                return render_template("createaccount.html", error=error)
                
 
         # --- Step 4: Hash password ---
@@ -127,34 +129,38 @@ def createaccount():
         hashed_pw = bcrypt.hashpw(pw_bytes, salt)
 
         # --- Step 5: Insert user ---
-        user_data = {
-            'FirstName': FirstName,
-            'LastName': LastName,
-            'PhoneNumber': PhoneNumber,
-            'Email': Email,
-            'Password': hashed_pw,
-            'Role': role,
-            'LocationID': location_id
-        }
+        if get_one(Account, Email=Email):
+            error = "An account with this email already exists"
+            return render_template("createaccount.html", error=error)
 
         try:
-            if not get_one(Account, Email=Email):
-                insert(Account(**user_data))
-            else:
-                error = "An account with this email already exists"
-                return render_template('createaccount.html', error=error)
+            insert(Account(
+                FirstName=FirstName.upper(),
+                LastName=LastName.upper(),
+                PhoneNumber=PhoneNumber,
+                Email=Email,
+                Password=hashed_pw,
+                Role=role,
+                LocationID=location_id
+            ))
         except Exception as e:
             logging.error(f"User creation error: {e}")
-            return redirect(url_for('error', errors=str(e)))
+            return redirect(url_for("error", errors=str(e)))
+        
+        # Retrieve user & set session for the 'login' route
+        user = get_one(Account, Email=Email)
+        session["user_id"] = user.AccountID
+        session["user_email"] = user.Email
+        session["user_name"] = f"{user.FirstName} {user.LastName}"
 
         # --- Step 6: Role-based redirect ---
-        if role == 'EVENT_PLANNER':
-            return redirect(url_for('eventpage'))
-        elif role == 'RESTAURANT_OWNER':
-            return redirect(url_for('restaurant_page'))  # Or a dedicated RO dashboard
+        if role == "EVENT_PLANNER":
+            return redirect(url_for("eventpage"))
+        elif role == "RESTAURANT_OWNER":
+            return redirect(url_for("restaurant_page"))
         else:
-            return redirect(url_for('landing'))
-
+            return redirect(url_for("landing"))
+        
     # GET request: render signup page
     return render_template('createaccount.html')
 
@@ -186,7 +192,7 @@ def delete():
             logging.error(f"Error deleting user:, {e}")
             error = "An error occured. Please try again"
         finally:
-            session.close()
+            db.close()
     return render_template("delete.html", error=error, message=message)
 
 @app.route('/login', methods=["GET", "POST"])
@@ -207,32 +213,28 @@ def login():
             stored_hash_hex = attempted_user.Password
             stored_hash_bytes = codecs.decode(stored_hash_hex.replace("\\x", ""), "hex")
 
-            if bcrypt.checkpw(password, stored_hash_bytes):
-                session['user_email'] = attempted_user.Email
-                return redirect(url_for('user_landing'))
-            # Validate password
-            if bcrypt.checkpw(password, stored_hash_bytes):
-                # Redirect based on role (case-insensitive)
-                role = attempted_user.Role.strip().lower()
-
-                if role == 'event_planner':
-                    logging.info(f"{email} logged in as Event Planner.")
-                    return redirect(url_for('eventpage'))
-
-                elif role == 'restaurant_owner':
-                    logging.info(f"{email} logged in as Restaurant Owner.")
-                    return redirect(url_for('restaurant_page'))
-
-                else:
-                    logging.warning(f"{email} has unknown role '{attempted_user.Role}'. Redirecting home.")
-                    return redirect(url_for('home'))
-            else:
+            if not bcrypt.checkpw(password, stored_hash_bytes):
                 logging.error("Incorrect password.")
                 return redirect(url_for('login'))
+            
+            # Login successful >> Set session
+            session['user_id'] = attempted_user.AccountID
+            session['user_email'] = attempted_user.Email
+            session['user_name'] = f"{attempted_user.FirstName} {attempted_user.LastName}"
+            
+            role = attempted_user.Role.strip().lower()
+
+            if role == "event_planner":
+                return redirect(url_for("eventpage"))
+
+            elif role == "restaurant_owner":
+                return redirect(url_for("restaurant_page"))
+
+            else:
+                return redirect(url_for("landing"))
 
         except Exception as e:
-            print(f"Login error: {e}")
-            logging.exception(f"Error during login: {e}")
+            logging.exception(f"Login error: {e}")
             return redirect(url_for('login'))
 
     return render_template('login.html')
