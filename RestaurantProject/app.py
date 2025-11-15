@@ -82,7 +82,7 @@ def createaccount():
             db.commit()
         except Exception as e:
             logging.error(f"Location creation error: {e}")
-            return redirect(url_for('error', errors=str(e))), errors=str(e)))
+            return redirect(url_for('error', errors=str(e)))
             
         # Validate user info
         FirstName = request.form["FirstName"].strip()
