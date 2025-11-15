@@ -317,7 +317,15 @@ def edit_account():
 # General Events Page
 @app.route('/event')
 def eventpage():
-    return render_template('bookit-eventpage.html', api_key=api_key)
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    # Pull First Name from database
+    user_id = session['user_id']
+    user = get_one(Account, UserID=user_id)
+    first_name = f"{user.FirstName}" if user else "My Profile"
+    
+    return render_template('bookit-eventpage.html', user_name=first_name, api_key=api_key)
 
 # Event Page
 @app.route('/event/<int:event_id>')
