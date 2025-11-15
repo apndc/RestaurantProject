@@ -232,7 +232,7 @@
 </head>
 
 <body>
-  <header style="display:flex; justify-content:space-between; align-items:center; padding:1rem 2rem; background:var(--tan); border-bottom:2px solid #bba36b;">
+ <header style="display:flex; justify-content:space-between; align-items:center; padding:1rem 2rem; background:var(--tan); border-bottom:2px solid #bba36b;">
   <!-- Logo -->
   <a href="{{ url_for('eventpage') }}" class="logo">🍽️ BookIt</a>
 
@@ -245,16 +245,12 @@
     <!-- Dropdown Menu -->
     <div id="userDropdown" style="display:none; position:absolute; right:0; top:100%; background:#fff; border:1px solid #ddd; border-radius:5px; box-shadow:0 2px 5px rgba(0,0,0,0.2); min-width:150px; z-index:100;">
       <a href="{{ url_for('edit_account') }}" style="display:block; padding:10px; text-decoration:none; color:#333;">Edit Account</a>
-      
-      <!-- Delete Account triggers modal -->
       <button id="deleteBtnNav" style="display:block; width:100%; padding:10px; border:none; background:none; text-align:left; color:red; cursor:pointer;">Delete Account</button>
-      
       <a href="{{ url_for('logout') }}" style="display:block; padding:10px; text-decoration:none; color:#333;">Log Out</a>
     </div>
   </div>
 </header>
 
-<!-- Delete Account Modal -->
 <div id="deleteModal" style="display:none; position:fixed; inset:0; background: rgba(0,0,0,0.5); justify-content:center; align-items:center;">
   <div style="background:#fff; padding:20px; border-radius:10px; max-width:400px; text-align:center;">
     <h3 style="color:red;">Confirm Deletion</h3>
@@ -318,7 +314,7 @@
     </div>
   </div>
 
-  <script>
+<script>
 const userMenuBtn = document.getElementById('userMenuBtn');
 const userDropdown = document.getElementById('userDropdown');
 
