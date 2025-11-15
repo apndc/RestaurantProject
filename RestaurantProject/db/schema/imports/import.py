@@ -1,14 +1,13 @@
 import csv, os
 
-from sqlalchemy import Engine
-from db.server import get_session
+from db.server import get_session, engine
 from db.schema import *
 from db.schema import Base, EP_Verification, RO_Verification
 
 # --------------------------
 # Ensure all tables exist first
 # --------------------------
-Base.metadata.create_all(bind=Engine)  # creates all tables registered in metadata, including EP/RO
+Base.metadata.create_all(bind=engine)  # creates all tables registered in metadata, including EP/RO
 
 
 def readFile(fileName):
