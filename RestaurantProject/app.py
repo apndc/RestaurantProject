@@ -165,35 +165,43 @@ def createaccount():
     # GET request: render signup page
     return render_template('createaccount.html')
 
-#Delete SQL
-@app.route('/delete', methods=["GET", "POST"])
+# Delete current logged-in user
+@app.route('/delete', methods=["POST"])
 def delete():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    db = get_session()
     error = None
     message = None
-    if request.method == "POST":
-        try:
-            import codecs
-            email = request.form.get("Email").lower().strip()
 
-            user = get_one(Account, Email=email)
+    try:
+        # Get the logged-in user
+        user = db.query(Account).filter_by(UserID=session['user_id']).first()
 
-            userPw = request.form["Password"].encode('utf-8')
-            
-            if not user:
-                error = "No account found with that email."
-                logging.error(error)
-            else:
-                stored_hash_hex = user.Password
-                stored_hash_bytes = codecs.decode(stored_hash_hex.replace("\\x", ""), "hex")
-                
-                if bcrypt.checkpw(userPw, stored_hash_bytes):
-                    delete_one(user)
-                    message = f"Account with email {email} has been deleted."
-        except Exception as e:
-            logging.error(f"Error deleting user:, {e}")
-            error = "An error occured. Please try again"
-        finally:
-            db.close()
+        if not user:
+            error = "User not found."
+            logging.error(error)
+        else:
+            # Delete user row
+            db.delete(user)
+            db.commit()
+            message = "Your account has been deleted successfully."
+
+            # Clear session
+            session.clear()
+
+            # Redirect to welcome page
+            return redirect(url_for('home'))
+
+    except Exception as e:
+        logging.error(f"Error deleting user: {e}")
+        error = "An error occurred. Please try again."
+
+    finally:
+        db.close()
+
+    # fallback if something went wrong
     return render_template("delete.html", error=error, message=message)
 
 @app.route('/login', methods=["GET", "POST"])
@@ -270,6 +278,38 @@ def user_landing():
 
     finally:
         db.close()
+        
+# logout function for username on landing page
+@app.route('/logout')
+def logout():
+    """Log out the current user and redirect to Welcome page"""
+    session.clear() 
+    return redirect(url_for('home'))
+
+# Edit account function for username on landing page
+@app.route('/edit_account', methods=['GET', 'POST'])
+def edit_account():
+    """View and update the logged-in user's account information"""
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    db = get_session()
+    user = db.query(Account).filter_by(UserID=session['user_id']).first()
+    
+    if request.method == 'POST':
+        # update fields from form
+        user.FirstName = request.form['FirstName'].strip().upper()
+        user.LastName = request.form['LastName'].strip().upper()
+        user.PhoneNumber = request.form['PhoneNumber'].replace("-", "")
+        user.Email = request.form['Email'].lower()
+        db.commit()
+        
+        # update session name
+        session['user_name'] = f"{user.FirstName} {user.LastName}"
+        
+        return redirect(url_for('user_landing'))
+    
+    return render_template('edit_account.html', user=user)
 
 # General Events Page
 @app.route('/event')
