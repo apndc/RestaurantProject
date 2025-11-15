@@ -181,7 +181,7 @@ def delete():
             logging.error(f"Error deleting user:, {e}")
             error = "An error occured. Please try again"
         finally:
-            db.close()
+            session.close()
     return render_template("delete.html", error=error, message=message)
 
 @app.route('/login', methods=["GET", "POST"])
