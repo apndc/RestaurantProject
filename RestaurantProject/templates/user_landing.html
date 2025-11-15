@@ -14,7 +14,7 @@
         <h3 style="color:red;">Confirm Deletion</h3>
         <p>Are you sure you want to delete your account? This action cannot be undone.</p>
         
-        <form method="POST" action="{{ url_for('delete_account') }}">
+        <form method="POST" action="{{ url_for('delete') }}">
             <button type="submit" style="background:red; color:white; padding:8px 12px; border:none; border-radius:5px; margin-right:10px;">Yes, Delete</button>
             <button type="button" id="cancelDelete" style="padding:8px 12px; border:none; border-radius:5px;">Cancel</button>
         </form>
