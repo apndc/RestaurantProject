@@ -98,27 +98,27 @@ def createaccount():
 
         if not (FirstName.isalpha() and LastName.isalpha()):
             error = "INVALID NAME"
-            return redirect('createaccount.html', error=error)
+            return render_template('createaccount.html', error=error)
         if not (PhoneNumber.isnumeric() and len(PhoneNumber) == 10):
             error = "INVALID PHONE NUMBER"
-            return redirect('createaccount.html', error=error)
+            return render_template('createaccount.html', error=error)
             
         # --- Step 3: Role verification for EP/RO ---
         if role in ['EVENT_PLANNER', 'RESTAURANT_OWNER']:
             verification_code = request.form.get('verification_code', '').strip().lower()
 
             if role == 'EVENT_PLANNER':
-                record = session.query(EP_Verification).filter(
+                record = db.query(EP_Verification).filter(
                     func.lower(EP_Verification.verification_code)==verification_code
                 ).first()
             else:  # RESTAURANT_OWNER
-                record = session.query(RO_Verification).filter(
+                record = db.query(RO_Verification).filter(
                     func.lower(RO_Verification.verification_code)==verification_code
                 ).first()
 
             if not record:
                 error = "INVALID VERIFICATION CREDENTIALS"
-                return redirect('createaccount.html', error=error)
+                return render_template('createaccount.html', error=error)
                
 
         # --- Step 4: Hash password ---
@@ -142,7 +142,7 @@ def createaccount():
                 insert(Account(**user_data))
             else:
                 error = "An account with this email already exists"
-                return redirect('createaccount.html', error=error)
+                return render_template('createaccount.html', error=error)
         except Exception as e:
             logging.error(f"User creation error: {e}")
             return redirect(url_for('error', errors=str(e)))
@@ -153,7 +153,7 @@ def createaccount():
         elif role == 'RESTAURANT_OWNER':
             return redirect(url_for('restaurant_page'))  # Or a dedicated RO dashboard
         else:
-            return redirect(url_for('home'))
+            return redirect(url_for('landing'))
 
     # GET request: render signup page
     return render_template('createaccount.html')
