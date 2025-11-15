@@ -20,6 +20,7 @@
       --gray: #666;
       --black: #000;
     }
+
     * { box-sizing: border-box; }
     body {
       margin: 0;
@@ -33,55 +34,160 @@
 
     /* === HEADER === */
     header {
-      width: 100%;
-    }
-    nav {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 10px 20px;
       background: var(--tan);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 2rem;
       border-bottom: 2px solid #bba36b;
     }
     .logo {
       font-weight: bold;
       font-size: 1.8rem;
       color: var(--brown);
-      text-decoration: none;
     }
-    /* Dropdown user menu */
-    .user-menu-btn {
-      background: none;
-      border: none;
-      cursor: pointer;
-      color: var(--brown);
-      font-weight: bold;
-      font-size: 1rem;
+
+    /* === GREETING === */
+    .greeting {
+      text-align: center;
+      font-size: 1.2rem;
+      padding: 0.8rem;
     }
-    .user-dropdown {
-      display: none;
-      position: absolute;
-      right: 0;
-      top: 100%;
-      background: #fff;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-      min-width: 150px;
-      z-index: 100;
-    }
-    .user-dropdown a, .user-dropdown button {
-      display: block;
+
+    /* === MAIN GRID === */
+    main {
+      display: grid;
+      grid-template-areas:
+        "calendar customers"
+        "checklist venues"
+        "checklist restaurants";
+      grid-template-columns: 2fr 1.2fr;
+      gap: 1rem;
+      padding: 1rem 2rem;
       width: 100%;
-      padding: 10px;
-      text-align: left;
-      text-decoration: none;
-      color: #333;
+      flex: 1;
+    }
+
+    section {
+      background: var(--white);
+      border: 2px solid var(--tan);
+      border-radius: 8px;
+      padding: 1rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+
+    .calendar { grid-area: calendar; background: #e4e7eb; }
+    .customers { grid-area: customers; }
+    .checklist { grid-area: checklist; }
+    .venues { grid-area: venues; background: #f4ecd8; }
+    .restaurants { grid-area: restaurants; background: #f4ecd8; }
+
+    h3 { margin-top: 0; color: var(--brown); }
+
+    /* === FOOTER === */
+    footer {
+      text-align: center;
+      padding: 1rem;
+      border-top: 1px solid #ccc;
+      color: var(--gray);
+      font-size: 0.9rem;
+    }
+    footer a { color: var(--brown); text-decoration: none; }
+
+    /* === CALENDAR === */
+    .calendar-controls {
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }
+    .calendar-controls button {
+      background: var(--brown);
+      color: white;
       border: none;
-      background: none;
+      padding: 0.4rem 0.8rem;
+      margin: 0 0.3rem;
+      border-radius: 4px;
       cursor: pointer;
     }
-    .user-dropdown button { color: red; }
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      background: #fff;
+      border-radius: 5px;
+      padding: 0.4rem;
+    }
+    .day {
+      background: #f8f8f8;
+      text-align: center;
+      padding: 1rem 0;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .day:hover { background: #d9cba4; }
+
+    /* === CHECKLIST === */
+    .checklist ul { list-style: none; padding: 0; }
+    .checklist li {
+      background: #f8f8f8;
+      margin: 0.3rem 0;
+      padding: 0.5rem;
+      border-radius: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .checklist button {
+      background: var(--brown);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      padding: 0.3rem 0.6rem;
+    }
+
+    /* === VENUES === */
+    .venues input, .venues button {
+      width: 100%;
+      padding: 0.5rem;
+      margin-bottom: 0.5rem;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    #map { width: 100%; height: 250px; border-radius: 8px; }
+
+    /* === RESTAURANTS === */
+    .restaurants ul { list-style: none; padding: 0; }
+    .restaurants li { margin-bottom: 0.5rem; }
+    .restaurants a {
+      color: var(--brown);
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    .restaurant-card {
+      border: 1px solid #ddd;
+      padding: 15px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+      background-color: #f9f9f9;
+    }
+    .restaurant-card a {
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+    .restaurant-card button {
+      width: 20%;
+      padding: 10px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      text-align: left;
+    }
+    .restaurant-card button:hover { background-color: #0056b3; }
 
     /* === MODAL === */
     .modal {
@@ -110,46 +216,57 @@
       cursor: pointer;
     }
 
-    /* === Existing EP styles omitted for brevity === */
+    /* === MEDIA QUERIES === */
+    @media(max-width:900px){
+      main {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+          "calendar"
+          "customers"
+          "checklist"
+          "venues"
+          "restaurants";
+      }
+    }
   </style>
 </head>
 
 <body>
-  <!-- HEADER with top-right user menu -->
-  <header>
-    <nav>
-      <a href="{{ url_for('eventpage') }}" class="logo">🍽️ BookIt</a>
+  <header style="display:flex; justify-content:space-between; align-items:center; padding:1rem 2rem; background:var(--tan); border-bottom:2px solid #bba36b;">
+  <!-- Logo -->
+  <a href="{{ url_for('eventpage') }}" class="logo">🍽️ BookIt</a>
 
-      <div style="position:relative; margin-left:auto;">
-        <button id="userMenuBtnEP" class="user-menu-btn">
-          {{ user_name or 'My Profile' }} ▼
-        </button>
+  <!-- User Menu -->
+  <div style="position:relative;">
+    <button id="userMenuBtn" style="background:none; border:none; cursor:pointer; color:var(--brown); font-weight:bold;">
+      {{ user_name or 'My Profile' }} ▼
+    </button>
 
-        <div id="userDropdownEP" class="user-dropdown">
-          <a href="{{ url_for('edit_account') }}">Edit Account</a>
-          <button id="deleteBtnNavEP">Delete Account</button>
-          <a href="{{ url_for('logout') }}">Log Out</a>
-        </div>
-      </div>
-    </nav>
-  </header>
-
-  <!-- Delete Account Modal -->
-  <div id="deleteModalEP" class="modal">
-    <div class="modal-content">
-      <h3 style="color:red;">Confirm Deletion</h3>
-      <p>Are you sure you want to delete your account? This action cannot be undone.</p>
-      <form method="POST" action="{{ url_for('delete') }}">
-        <button type="submit" style="background:red; color:white;">Yes, Delete</button>
-        <button type="button" id="cancelDeleteEP">Cancel</button>
-      </form>
+    <!-- Dropdown Menu -->
+    <div id="userDropdown" style="display:none; position:absolute; right:0; top:100%; background:#fff; border:1px solid #ddd; border-radius:5px; box-shadow:0 2px 5px rgba(0,0,0,0.2); min-width:150px; z-index:100;">
+      <a href="{{ url_for('edit_account') }}" style="display:block; padding:10px; text-decoration:none; color:#333;">Edit Account</a>
+      
+      <!-- Delete Account triggers modal -->
+      <button id="deleteBtnNav" style="display:block; width:100%; padding:10px; border:none; background:none; text-align:left; color:red; cursor:pointer;">Delete Account</button>
+      
+      <a href="{{ url_for('logout') }}" style="display:block; padding:10px; text-decoration:none; color:#333;">Log Out</a>
     </div>
   </div>
+</header>
 
-  <!-- GREETING -->
-  <div class="greeting">Hi {{ user_name or 'EP' }}</div>
+<!-- Delete Account Modal -->
+<div id="deleteModal" style="display:none; position:fixed; inset:0; background: rgba(0,0,0,0.5); justify-content:center; align-items:center;">
+  <div style="background:#fff; padding:20px; border-radius:10px; max-width:400px; text-align:center;">
+    <h3 style="color:red;">Confirm Deletion</h3>
+    <p>Are you sure you want to delete your account? This action cannot be undone.</p>
+    
+    <form method="POST" action="{{ url_for('delete') }}">
+      <button type="submit" style="background:red; color:white; padding:8px 12px; border:none; border-radius:5px; margin-right:10px;">Yes, Delete</button>
+      <button type="button" id="cancelDelete" style="padding:8px 12px; border:none; border-radius:5px;">Cancel</button>
+    </form>
+  </div>
+</div>
 
-  <!-- MAIN CONTENT -->
   <main>
     <section class="calendar">
       <h3>Calendar View</h3>
@@ -162,7 +279,9 @@
 
     <section class="customers">
       <h3>Upcoming Customers</h3>
-      <ul><!-- Customer list here --></ul>
+      <ul>
+        <!-- Customer list here -->
+      </ul>
     </section>
 
     <section class="checklist">
@@ -199,34 +318,34 @@
     </div>
   </div>
 
-  <!-- SCRIPTS -->
   <script>
-    // User Dropdown
-    const userMenuBtnEP = document.getElementById('userMenuBtnEP');
-    const userDropdownEP = document.getElementById('userDropdownEP');
+const userMenuBtn = document.getElementById('userMenuBtn');
+const userDropdown = document.getElementById('userDropdown');
 
-    userMenuBtnEP.addEventListener('click', () => {
-      userDropdownEP.style.display = (userDropdownEP.style.display === 'block') ? 'none' : 'block';
-    });
+userMenuBtn.addEventListener('click', () => {
+  userDropdown.style.display = (userDropdown.style.display === 'block') ? 'none' : 'block';
+});
 
-    document.addEventListener('click', (e) => {
-      if (!userMenuBtnEP.contains(e.target) && !userDropdownEP.contains(e.target)) {
-        userDropdownEP.style.display = 'none';
-      }
-    });
+// Close dropdown if clicked outside
+document.addEventListener('click', (e) => {
+  if (!userMenuBtn.contains(e.target) && !userDropdown.contains(e.target)) {
+    userDropdown.style.display = 'none';
+  }
+});
 
-    // Delete Modal
-    const deleteBtnNavEP = document.getElementById('deleteBtnNavEP');
-    const deleteModalEP = document.getElementById('deleteModalEP');
-    const cancelDeleteEP = document.getElementById('cancelDeleteEP');
+// Delete Account Modal
+const deleteBtnNav = document.getElementById('deleteBtnNav');
+const deleteModal = document.getElementById('deleteModal');
+const cancelDelete = document.getElementById('cancelDelete');
 
-    deleteBtnNavEP.addEventListener('click', () => {
-      deleteModalEP.style.display = 'flex';
-    });
+deleteBtnNav.addEventListener('click', () => {
+  deleteModal.style.display = 'flex';
+});
 
-    cancelDeleteEP.addEventListener('click', () => {
-      deleteModalEP.style.display = 'none';
-    });
-  </script>
+cancelDelete.addEventListener('click', () => {
+  deleteModal.style.display = 'none';
+});
+</script>
+
 </body>
 </html>
