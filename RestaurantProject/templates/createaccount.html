@@ -13,7 +13,7 @@
     <main class="sign_page">
         <section class="sign_page">
             <h1>Sign Up</h1>
-            <form method="post" action="/createaccount" class="form-grid">
+            <form method="post" action="{{url_for('createaccount')}}" class="form-grid">
 
                 <!-- First and Last Name -->
                 <div class="form-grid two-col">
@@ -97,7 +97,7 @@
 
             </form>     
 
-            <a href="/"><button type="button" id="home">Home</button></a>
+            <button type="submit">Create Account</button>
 
         </section>
     </main>
