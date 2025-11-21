@@ -10,16 +10,13 @@
 <body>
     <h1>Delete Account</h1>
     <section class="sign_page">
+        <p>Are you sure you want to delete your account? This action cannot be undone.</p>
+
         <!-- Delete account form -->
-        <form method="post">
-            <label for="Email">Email:</label><br>
-            <input type="email" id="Email" name="Email" value="" required><br><br>
-            <div>
-                <label for="Password">Password:</label><br>
-                <input type="password" id="Password" name="Password">
-            </div>
-            <br>
-            <input type="submit" value="Delete Account">
+        <form method="post" action="{{ url_for('delete') }}">
+            <button type="submit" style="background-color:red; color:white; padding:10px 20px;">
+                Yes, Delete My Account
+            </button>
         </form>
     </section>
 
@@ -30,8 +27,8 @@
     {% endif %}
 
     <br>
-    <a href="/">
-        <button type="button" id="home">Home</button>
+    <a href="{{ url_for('user_landing') }}">
+        <button type="button" id="home">Cancel</button>
     </a>
 </body>
 </html>

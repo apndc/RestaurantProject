@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit Account | 🍽️ BookIt</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+<header>
+    <a href="{{ url_for('user_landing') }}" class="logo">🍽️ BookIt</a>
+</header>
+
+<main class="sign_page">
+    <section class="sign_page">
+        <h1>Edit Account</h1>
+
+        <form method="POST" action="{{ url_for('edit_account') }}" class="form-grid">
+
+            <!-- First and Last Name -->
+            <div class="form-grid two-col">
+                <div>
+                    <label for="FirstName">First Name:</label>
+                    <input type="text" id="FirstName" name="FirstName" value="{{ user.FirstName }}" required/>
+                </div>
+                
+                <div>
+                    <label for="LastName">Last Name:</label>
+                    <input type="text" id="LastName" name="LastName" value="{{ user.LastName }}" required/> 
+                </div>
+            </div>
+
+            <!-- Email and Phone -->
+            <div class="form-grid two-col">
+                <div>
+                    <label for="Email">Email:</label>
+                    <input type="email" id="Email" name="Email" value="{{ user.Email }}" required/>
+                </div>
+
+                <div>
+                    <label for="PhoneNumber">Phone Number: </label>
+                    <input type="tel" id="PhoneNumber" name="PhoneNumber" value="{{ user.PhoneNumber }}" pattern="[0-9]{10}" required/>
+                </div>
+            </div>
+
+            <!-- Location (optional, read-only if you prefer) -->
+            <div class="form-grid two-col">
+                <div>
+                    <label for="StreetName">Street:</label>
+                    <input type="text" id="StreetName" value="{{ user.location.StreetName }}" readonly />
+                </div>
+
+                <div>
+                    <label for="City">City:</label>
+                    <input type="text" id="City" value="{{ user.location.City }}" readonly />
+                </div>
+            </div>
+
+            <div class="form-grid two-col">
+                <div>
+                    <label for="State">State:</label>
+                    <input type="text" id="State" value="{{ user.location.State }}" readonly />
+                </div>
+
+                <div>
+                    <label for="ZipCode">Zip Code:</label>
+                    <input type="text" id="ZipCode" value="{{ user.location.ZipCode }}" readonly />
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="form-grid one-col">
+                <input type="submit" value="Save Changes"/>
+            </div>
+
+        </form>
+
+        <a href="{{ url_for('user_landing') }}"><button type="button">Cancel</button></a>
+
+    </section>
+</main>
+
+</body>
+</html>

@@ -1,8 +1,5 @@
-landing
 from flask import Flask, render_template, request, url_for, redirect, session
-
 from flask import Flask, render_template, request, session, url_for, redirect
-main
 import os, bcrypt, logging
 from sqlalchemy import func
 from sqlalchemy.orm import joinedload
@@ -63,62 +60,68 @@ def error():
 
 @app.route('/createaccount', methods=["GET", "POST"])
 def createaccount():
-    error: str = None
-    is_valid: bool = False
+    import re
+    error = None
 
-    if request.method == 'POST':
-        # Make A Location
-        
+    if request.method == "POST":
         db = get_session()
-        
-        location_data: dict = {}
 
-        valid_location = False
-        
-        for key, value in request.form.items():
-            if key == 'StreetName' or key == 'City' or key == 'State' or key == 'ZipCode':
-                location_data[key] = value.strip()
-        
+        # Save Location
+        location_data = {
+        key: value.strip()
+        for key, value in request.form.items()
+        if key in ['StreetName', 'City', 'State', 'ZipCode']
+        }
+
         newLocation = Location(**location_data)
-        
+
         try:
             db.add(newLocation)
             db.flush()
             location_id = newLocation.LocationID
             db.commit()
-            valid_location = True
         except Exception as e:
-                logging.error(f"An error has occurred: {e}")
-                return redirect(url_for('error', errors=str(e)))
+            logging.error(f"Location creation error: {e}")
+            return redirect(url_for('error', errors=str(e)))
             
         # Validate user info
-        FirstName=request.form["FirstName"].upper()
-        LastName=request.form["LastName"].upper()
-        PhoneNumber=request.form["PhoneNumber"].replace("-", "")
-        Email=request.form["Email"].lower()
-        Password=request.form["Password"]
-        role=request.form["Role"].upper()
+        FirstName = request.form["FirstName"].strip()
+        LastName = request.form["LastName"].strip()
+        PhoneNumber = request.form["PhoneNumber"].replace("-", "")
+        Email = request.form["Email"].lower()
+        Password = request.form["Password"]
+        role = request.form.get("Role", "").upper()
 
-        if not (FirstName.isalpha() and LastName.isalpha()):
-            return redirect(url_for('error', errors="Invalid name"))
+        # --- Step 1: Name validation ---
+        name_pattern = re.compile(r"^[A-Za-z'-]+$")
+
+        if not (name_pattern.match(FirstName) and name_pattern.match(LastName)):
+            error = "INVALID NAME"
+            return render_template("createaccount.html", error=error)
+
+        # --- Step 2: Phone validation ---
         if not (PhoneNumber.isnumeric() and len(PhoneNumber) == 10):
-            return redirect(url_for('error', errors="Invalid phone number"))
-
+            error = "INVALID PHONE NUMBER"
+            return render_template("createaccount.html", error=error)
+            
         # --- Step 3: Role verification for EP/RO ---
         if role in ['EVENT_PLANNER', 'RESTAURANT_OWNER']:
-            verification_code = request.form.get('verification_code', '').strip().lower()
+            verification_code = request.form.get("verification_code", "").strip().lower()
 
             if role == 'EVENT_PLANNER':
-                record = session.query(EP_Verification).filter(
-                    func.lower(EP_Verification.verification_code)==verification_code
+                record = db.query(EP_Verification).filter(
+                    func.lower(EP_Verification.verification_code) == verification_code
                 ).first()
-            else:  # RESTAURANT_OWNER
-                record = session.query(RO_Verification).filter(
-                    func.lower(RO_Verification.verification_code)==verification_code
+
+            else:
+                record = db.query(RO_Verification).filter(
+                    func.lower(RO_Verification.verification_code) == verification_code
                 ).first()
 
             if not record:
-                return redirect(url_for('error', errors='Invalid verification credentials'))
+                error = "INVALID VERIFICATION CREDENTIALS"
+                return render_template("createaccount.html", error=error)
+               
 
         # --- Step 4: Hash password ---
         pw_bytes = Password.encode('utf-8')
@@ -126,65 +129,79 @@ def createaccount():
         hashed_pw = bcrypt.hashpw(pw_bytes, salt)
 
         # --- Step 5: Insert user ---
-        user_data = {
-            'FirstName': FirstName,
-            'LastName': LastName,
-            'PhoneNumber': PhoneNumber,
-            'Email': Email,
-            'Password': hashed_pw,
-            'Role': role,
-            'LocationID': location_id
-        }
+        if get_one(Account, Email=Email):
+            error = "An account with this email already exists"
+            return render_template("createaccount.html", error=error)
 
         try:
-            if not get_one(Account, Email=Email):
-                insert(Account(**user_data))
-            else:
-                return redirect(url_for('error', errors="An account with this email already exists"))
+            insert(Account(
+                FirstName=FirstName.upper(),
+                LastName=LastName.upper(),
+                PhoneNumber=PhoneNumber,
+                Email=Email,
+                Password=hashed_pw,
+                Role=role,
+                LocationID=location_id
+            ))
         except Exception as e:
             logging.error(f"User creation error: {e}")
-            return redirect(url_for('error', errors=str(e)))
+            return redirect(url_for("error", errors=str(e)))
+        
+        # Retrieve user & set session for the 'login' route
+        user = get_one(Account, Email=Email)
+        session["user_id"] = user.UserID
+        session["user_email"] = user.Email
+        session["user_name"] = f"{user.FirstName} {user.LastName}"
 
         # --- Step 6: Role-based redirect ---
-        if role == 'EVENT_PLANNER':
-            return redirect(url_for('eventpage'))
-        elif role == 'RESTAURANT_OWNER':
-            return redirect(url_for('restaurant_page'))  # Or a dedicated RO dashboard
+        if role == "EVENT_PLANNER":
+            return redirect(url_for("eventpage"))
+        elif role == "RESTAURANT_OWNER":
+            return redirect(url_for("restaurant_page"))
         else:
-            return redirect(url_for('home'))
-
+            #default = normal customer
+            return redirect(url_for("user_landing"))
+        
     # GET request: render signup page
     return render_template('createaccount.html')
 
-#Delete SQL
-@app.route('/delete', methods=["GET", "POST"])
+# Delete current logged-in user
+@app.route('/delete', methods=["POST"])
 def delete():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    db = get_session()
     error = None
     message = None
-    if request.method == "POST":
-        try:
-            import codecs
-            email = request.form.get("Email").lower().strip()
 
-            user = get_one(Account, Email=email)
+    try:
+        # Get the logged-in user
+        user = db.query(Account).filter_by(UserID=session['user_id']).first()
 
-            userPw = request.form["Password"].encode('utf-8')
-            
-            if not user:
-                error = "No account found with that email."
-                logging.error(error)
-            else:
-                stored_hash_hex = user.Password
-                stored_hash_bytes = codecs.decode(stored_hash_hex.replace("\\x", ""), "hex")
-                
-                if bcrypt.checkpw(userPw, stored_hash_bytes):
-                    delete_one(user)
-                    message = f"Account with email {email} has been deleted."
-        except Exception as e:
-            logging.error(f"Error deleting user:, {e}")
-            error = "An error occured. Please try again"
-        finally:
-            db.close()
+        if not user:
+            error = "User not found."
+            logging.error(error)
+        else:
+            # Delete user row
+            db.delete(user)
+            db.commit()
+            message = "Your account has been deleted successfully."
+
+            # Clear session
+            session.clear()
+
+            # Redirect to welcome page
+            return redirect(url_for('home'))
+
+    except Exception as e:
+        logging.error(f"Error deleting user: {e}")
+        error = "An error occurred. Please try again."
+
+    finally:
+        db.close()
+
+    # fallback if something went wrong
     return render_template("delete.html", error=error, message=message)
 
 @app.route('/login', methods=["GET", "POST"])
@@ -205,34 +222,31 @@ def login():
             stored_hash_hex = attempted_user.Password
             stored_hash_bytes = codecs.decode(stored_hash_hex.replace("\\x", ""), "hex")
 
-landing
-            if bcrypt.checkpw(userPw, stored_hash_bytes):
-                session['user_email'] = attempted_user.Email
-                return redirect(url_for('user_landing'))
-            # Validate password
-            if bcrypt.checkpw(password, stored_hash_bytes):
-                # Redirect based on role (case-insensitive)
-                role = attempted_user.Role.strip().lower()
-
-                if role == 'event_planner':
-                    logging.info(f"{email} logged in as Event Planner.")
-                    return redirect(url_for('eventpage'))
-
-                elif role == 'restaurant_owner':
-                    logging.info(f"{email} logged in as Restaurant Owner.")
-                    return redirect(url_for('restaurant_page'))
-
-                else:
-                    logging.warning(f"{email} has unknown role '{attempted_user.Role}'. Redirecting home.")
-                    return redirect(url_for('home'))
-main
-            else:
+            if not bcrypt.checkpw(password, stored_hash_bytes):
                 logging.error("Incorrect password.")
                 return redirect(url_for('login'))
+            
+            # Login successful >> Set session
+            session['user_id'] = attempted_user.UserID
+            session['user_email'] = attempted_user.Email
+            session['user_name'] = f"{attempted_user.FirstName} {attempted_user.LastName}"
+            
+            role = attempted_user.Role.strip().lower()
+
+            if role == "event_planner":
+                return redirect(url_for("eventpage"))
+
+            elif role == "restaurant_owner":
+                return redirect(url_for("restaurant_page"))
+
+            elif role == "customer":
+                return redirect(url_for("user_landing"))
+           
+            else:
+                return redirect(url_for("home"))
 
         except Exception as e:
-            print(f"Login error: {e}")
-            logging.exception(f"Error during login: {e}")
+            logging.exception(f"Login error: {e}")
             return redirect(url_for('login'))
 
     return render_template('login.html')
@@ -253,7 +267,7 @@ def user_landing():
         upcoming = []
         try:
             upcoming = (
-                db.query(Reservation).options(joinedload(Reservation.restaurant)).filter(Reservation.AccountID == session['user_id'], Reservation.DateTime >= datetime.utcnow())
+                db.query(Reservation).options(joinedload(Reservation.restaurant)).filter(Reservation.UserID == session['user_id'], Reservation.DateTime >= datetime.utcnow())
                 .order_by(Reservation.DateTime.asc()).limit(5).all()
             )
         except Exception:
@@ -267,11 +281,51 @@ def user_landing():
 
     finally:
         db.close()
+        
+# logout function for username on landing page
+@app.route('/logout')
+def logout():
+    """Log out the current user and redirect to Welcome page"""
+    session.clear() 
+    return redirect(url_for('home'))
+
+# Edit account function for username on landing page
+@app.route('/edit_account', methods=['GET', 'POST'])
+def edit_account():
+    """View and update the logged-in user's account information"""
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    db = get_session()
+    user = db.query(Account).filter_by(UserID=session['user_id']).first()
+    
+    if request.method == 'POST':
+        # update fields from form
+        user.FirstName = request.form['FirstName'].strip().upper()
+        user.LastName = request.form['LastName'].strip().upper()
+        user.PhoneNumber = request.form['PhoneNumber'].replace("-", "")
+        user.Email = request.form['Email'].lower()
+        db.commit()
+        
+        # update session name
+        session['user_name'] = f"{user.FirstName} {user.LastName}"
+        
+        return redirect(url_for('user_landing'))
+    
+    return render_template('edit_account.html', user=user)
 
 # General Events Page
 @app.route('/event')
 def eventpage():
-    return render_template('bookit-eventpage.html', api_key=api_key)
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    # Pull First Name from database
+    user_id = session['user_id']
+    user = get_one(Account, UserID=user_id)
+    first_name = f"{user.FirstName}" if user else "My Profile"
+    
+    return render_template('bookit-eventpage.html', user_name=first_name, api_key=api_key)
 
 # Event Page
 @app.route('/event/<int:event_id>')
