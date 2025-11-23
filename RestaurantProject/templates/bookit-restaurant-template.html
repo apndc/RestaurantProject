@@ -52,9 +52,70 @@
                 {% endfor %}
             </div>
         </section>
+<!-- Reservation Section -->
+<section class="reservation-section">
+    <button id="reserveBtn" class="reserve-button">Make Reservation</button>
+
+    <div id="reservationForm" class="reservation-form" style="display:none;">
+        <h3>Reservation Information</h3>
+
+        <form action="{{ url_for('reservation') }}" method="POST">
+
+            <!-- Auto-filled User Fields -->
+            <label>First Name:</label>
+            <input type="text" name="firstName" 
+                value="{{ session.get('user_name').split()[0] if session.get('user_name') else '' }}" 
+                readonly>
+
+            <label>Last Name:</label>
+            <input type="text" name="lastName" 
+                value="{{ session.get('user_name').split()[1] if session.get('user_name') else '' }}" 
+                readonly>
+
+            <label>Email:</label>
+            <input type="email" name="email" 
+                value="{{ session.get('user_email') }}" readonly>
+
+            <!-- Restaurant Name (Hidden, Auto-Filled) -->
+            <input type="hidden" name="restaurantName" value="{{ restaurant.Name }}">
+
+            <!-- Date -->
+            <label>Reservation Date:</label>
+            <input type="date" name="date" required>
+
+            <!-- Time -->
+            <label>Reservation Time:</label>
+            <input type="time" name="time" required>
+
+            <!-- Guests -->
+            <label>Number of Guests:</label>
+            <input type="number" name="guests" min="1" max="20" required>
+
+            <!-- Special Event -->
+            <label>Special Event (optional):</label>
+            <input type="text" name="event" placeholder="Birthday, anniversary, etc.">
+
+            <!-- Accommodations -->
+            <label>Special Accommodations (optional):</label>
+            <textarea name="accommodations"
+                placeholder="Allergies, wheelchair access, high chair, etc."></textarea>
+
+            <button type="submit">Submit Reservation</button>
+        </form>
+    </div>
+</section>
+
         <section class="backButton">
             <a href="/restaurant"><button>Return To Restaurant View</button></a>
         </section>
     </main>
+<script>
+    const btn = document.getElementById("reserveBtn");
+    const form = document.getElementById("reservationForm");
+
+    btn.addEventListener("click", () => {
+        form.style.display = (form.style.display === "none") ? "block" : "none";
+    });
+</script>
 </body>
 </html>

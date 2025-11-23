@@ -116,9 +116,10 @@
     <script>
     // Show modal if error exists
     document.addEventListener('DOMContentLoaded', () => {
-        {% if error %}
-            document.getElementById('errorModal').style.display = 'flex';
-        {% endif %}
+    const hasError = {{ (error is not none)|tojson }};
+    if (hasError) {
+        document.getElementById('errorModal').style.display = 'flex';
+        }
     });
 
     // Close modal function
