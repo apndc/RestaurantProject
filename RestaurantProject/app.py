@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, url_for, redirect, session, g
-import os, bcrypt, logging
+import os, bcrypt, logging, re, requests
 from sqlalchemy.orm import joinedload
+from sqlalchemy import func
 from dotenv import load_dotenv
 from db.server import get_session
 from db.query import *
@@ -72,6 +73,37 @@ def login_required(f):
         return f(*args, **kwargs)
     return wrapper
 
+def get_distance_miles(origin, **destinations):
+    """
+    origin, destination: full address strings
+    returns: distance in miles (float) or None on failure
+    """
+    url = "https://maps.googleapis.com/maps/api/distancematrix/json"
+    params = {
+        "origins": origin,
+        "destinations": destinations,
+        "key": api_key,
+        "units": "imperial"   
+    }
+
+    resp = requests.get(url, params=params)
+    data = resp.json()
+
+    try:
+        element = data["rows"][0]["elements"][0]
+
+        if element["status"] != "OK":
+            return None
+
+        miles_text = element["distance"]["text"]  
+        
+        miles = float(miles_text.replace("mi", "").strip())
+        return miles
+
+    except (KeyError, IndexError, ValueError):
+        return None
+
+
 def guest_required(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
@@ -127,13 +159,14 @@ def createaccount():
             valid_location = True
         except Exception as e:
                 logging.error(f"An error has occurred: {e}")
-                return redirect(url_for('error', errors=str(e)))
+                return render_template("createaccount.html", error=error)
         finally:
             PGsession.close()
         # Make A User
         FirstName=request.form["FirstName"].upper()
         LastName=request.form["LastName"].upper()
         PhoneNumber=request.form["PhoneNumber"]
+        role = request.form.get("Role", "CUSTOMER").upper()
 
         if FirstName.isalpha() and LastName.isalpha() and PhoneNumber.isnumeric() and len(PhoneNumber) == 10:
             logging.info(f"Inputs {FirstName}, {LastName}, and {PhoneNumber} are valid.")
@@ -149,7 +182,7 @@ def createaccount():
             user_data['LocationID'] = location_id
 
             for key, value in request.form.items():
-                if key == 'FirstName' or key == 'LastName' or key == 'Role':
+                if key in ('FirstName', 'LastName', 'Role'):
                     user_data[key] = value.strip().upper()
                 elif key == 'Email':
                     user_data[key] = value.strip().lower()
@@ -158,6 +191,8 @@ def createaccount():
                 elif key == 'Password':
                     user_data[key] = value.strip()
             
+            user_data['Role'] = user_data.get('Role', 'CUSTOMER')
+
             # converting password to array of bytes
             bytes = user_data['Password'].encode('utf-8')
 
@@ -171,10 +206,10 @@ def createaccount():
                 if not get_one(Account, Email=user_data['Email']):
                     newUser = insert(Account(**user_data))
                 else:
-                    return redirect(url_for('error', errors="Already An Account With This Email"))
+                    return render_template("createaccount.html", error="Already An Account With This Email")
             except Exception as e:
                 logging.error(f"An error has occurred: {e}")
-                return redirect(url_for('error', errors=str(e)))
+                return render_template("createaccount.html", error=error)
             
             # Clear all Cookies and Add Account ID to Session
             session.clear()
@@ -184,9 +219,17 @@ def createaccount():
             # Additional Logging Info
             logging.info(f"User {newUser.UserID} created successfully.")
             
-            return redirect(url_for('restaurant_page'))
+            role = (newUser.Role or "CUSTOMER").strip().upper()
 
-    return render_template('createaccount.html')
+            if role == "EVENT_PLANNER":
+                return redirect(url_for('eventpage'))
+            elif role == "RESTAURANT_OWNER":
+                return redirect(url_for('restaurant_page'))
+            else:
+                # default: normal customer – you can change this to a /landing later
+                return redirect(url_for('restaurant_page'))
+
+    return render_template('createaccount.html', error=error)
 
 #Delete SQL
 @app.route('/delete', methods=["GET", "POST"])
@@ -264,17 +307,45 @@ def events(event_id):
 @app.route('/restaurant')
 @login_required
 def restaurant_page():
+
     session = get_session()
-    restaurants = session.query(RestaurantInfo).all()
-    session.close()
-    return render_template('bookit-restaurant.html', restaurants=restaurants, api_key=api_key)
+    
+    try:
+        sort = request.args.get('sort', 'name')
+
+        restaurants = session.query(RestaurantInfo).all()
+        
+        
+        user_location = session.query(Location).filter_by(LocationID = g.current_user.LocationID).first()
+        user_full_address = full_location(user_location)
+        
+        for r in restaurants:
+            r.full_address = full_location(r.location)
+            r.distance_miles = get_distance_miles(user_full_address, r.full_address)
+
+        # Sorts
+        if sort == 'name':
+            restaurants = sorted(restaurants, key=lambda r: r.Name.lower())
+        elif sort == 'rating':
+            ...
+            #restaurants = sorted(restaurants, key=lambda r: r.Rating or 0, reverse=True)
+        elif sort == 'distance':
+            restaurants = sorted(
+                restaurants,
+                key=lambda r: r.distance_miles if r.distance_miles is not None else 1e9
+            )
+        # add sort for cuisine
+
+        return render_template('bookit-restaurant.html',restaurants=restaurants,current_sort=sort, api_key=api_key)
+    finally:
+        session.close()
 
 # Individual Restaurant Page
-@app.route('/restaurant/<string:name>')
+@app.route('/restaurant/<int:restaurant_id>')
 @login_required
-def restaurant(name):
+def restaurant(restaurant_id):
     session = get_session()    
-    restaurant = session.query(RestaurantInfo).filter_by(Name=name).first()
+    restaurant = session.query(RestaurantInfo).filter_by(RID=restaurant_id).first()
     location = restaurant.location
     fullLocation = full_location(location)
     menuItems = restaurant.menu
@@ -336,23 +407,47 @@ def restaurant_form():
             phone_number = request.form.get('PhoneNumber')
             cuisine = request.form.get('Cuisine')
             capacity = int(request.form.get('Capacity'))
-            fee = int(request.form.get('Fee'))
+            fee = float(request.form.get('Fee'))
+
             # Create a default location for now
-            default_location = Location(StreetName="123 Default St", City="DefaultCity", State="DS", ZipCode="00000")
-            inserted_location = insert(default_location)
-            location_id = inserted_location.LocationID
-            new_restaurant = RestaurantInfo(
-                UserID=user_id,
-                LocationID=location_id,
-                Name=name,
-                Description=description,
-                PhoneNumber=phone_number,
-                Cuisine=cuisine,
-                Capacity=capacity,
-                Fee=fee
-            )
-            insert(new_restaurant)
-            message = "Restaurant added successfully!"
+            PGsession = get_session()
+        
+            location_data: dict = {}
+
+            valid_location = False
+            
+            for key, value in request.form.items():
+                if key in ('StreetName', 'City', 'State', 'ZipCode'):
+                    location_data[key] = value.strip()
+            
+            newLocation = Location(**location_data)
+            
+            try:
+                PGsession.add(newLocation)
+                PGsession.flush()
+                location_id = newLocation.LocationID
+                logging.info(location_id)
+                PGsession.commit()
+                valid_location = True
+            except Exception as e:
+                    logging.error(f"An error has occurred: {e}")
+                    return render_template("createaccount.html", error=error)
+            finally:
+                PGsession.close()
+
+            if valid_location:
+                new_restaurant = RestaurantInfo(
+                    UserID=user_id,
+                    LocationID=location_id,
+                    Name=name,
+                    Description=description,
+                    PhoneNumber=phone_number,
+                    Cuisine=cuisine,
+                    Capacity=capacity,
+                    Fee=fee
+                )
+                insert(new_restaurant)
+                message = "Restaurant added successfully!"
         except Exception as e:
             logging.error(f"Error adding restaurant: {e}")
             error = "An error occurred while adding the restaurant."

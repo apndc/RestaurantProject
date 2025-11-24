@@ -29,7 +29,30 @@ def importData(dataName):
     finally:
         session.close()
     
+def populate_verification():
+    session = get_session()
+    try:
+        # Clear old data first
+        session.query(EP_Verification).delete()
+        session.query(RO_Verification).delete()
+        session.commit()
 
+        # Insert dummy codes
+        ep_codes = ['ABC456']
+        ro_codes = ['XYZ123']
+
+        for code in ep_codes:
+            session.add(EP_Verification(verification_code=code))
+        for code in ro_codes:
+            session.add(RO_Verification(verification_code=code))
+
+        session.commit()
+        print("Verification tables populated!")
+    except Exception as e:
+        session.rollback()
+        print("Error populating verification tables:", e)
+    finally:
+        session.close()
 
 importData("Location")
 importData("Account")
@@ -38,3 +61,5 @@ importData("RestaurantInfo")
 importData("Reservation")
 importData("Events")
 importData("Menu")
+
+populate_verification()

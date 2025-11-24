@@ -1,38 +1,42 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <title>🍽️ BookIt Login Page</title>
-        <link rel="stylesheet" href="/static/style.css">
-    </head>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>🍽️ BookIt Login Page</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
 
+<body>
     <header>
         <a href="{{ url_for('home') }}" class="logo">🍽️ BookIt</a>
     </header>
-    <main class="login_page">
-    <section class="login_page">
-    <body>
-        <h1>Log In</h1>
-        <div>
-        <!-- Create a log in form here -->
-            <form method="post" action="/login" class="form-grid" >
-                <div class="form-grid two-col">
-                    <div>
-                        <label for="Email">Email:</label>
-                        <input type="text" id="Email" name="Email" value="" required/>
-                    </div>
-                
-                    <div>
-                        <label for="Password">Password:</label>
-                        <input type="password" id="Password" name="Password">
-                    </div>
-                </div>
-                <input type="submit" value="Submit">
-            </form>
-        </div>
 
-        <br>
-        <a href="/">
-            <button type="button" id="home">Home</button>
-        </a>
-    </body>
+    <main class="login_page">
+        <section class="login_page">
+            <h1>Log In</h1>
+            <div>
+                <form method="post" action="{{ url_for('login') }}" class="form-grid">
+                    <div class="form-grid two-col">
+                        <div>
+                            <label for="Email">Email:</label>
+                            <input type="text" id="Email" name="Email" required />
+                        </div>
+                    
+                        <div>
+                            <label for="Password">Password:</label>
+                            <input type="password" id="Password" name="Password" required />
+                        </div>
+                    </div>
+
+                    <input type="submit" value="Submit">
+                </form>
+            </div>
+
+            <br>
+            <a href="{{ url_for('home') }}">
+                <button type="button" id="home">Home</button>
+            </a>
+        </section>
+    </main>
+</body>
 </html>

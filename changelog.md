@@ -3,8 +3,14 @@
 * Cookie for Login and Signup to Stay Logged In
 * Login Specific Page Locking
 * Template for Header
+* Started Filter Functionality
+* Reverted Restaurant Routes to Use The RID instead of Name
+    * Makes Sure Duplicate Names Can Have Seperate Pages and Links
+## TO-DO:
+* Fix Some Filters
+* Add Menu Items
+* Add Route Decorators That Specifically Make Pages Available Based On Role
 
-## In Progress...
 # CHANGES [v2.1.0]: Templating and Page Generation
 
 # FINAL COMMIT

@@ -17,11 +17,19 @@
     <section class="restaurant-card">
         <!-- TODO: Make 'restaurant-details-menu' a Box with (maybe) 
                 The Restaurant Image with The Name Under It-->
+        <div class="sort-buttons">
+            <a href="{{ url_for('restaurant_page', sort='name') }}">Sort by Name</a>
+            <a href="{{ url_for('restaurant_page', sort='rating') }}">Sort by Rating</a>
+            <a href="{{ url_for('restaurant_page', sort='distance') }}">Sort by Distance</a>
+        </div>
+        <br>
         {% for restaurant in restaurants %}
-        <a href="{{ url_for('restaurant', name=restaurant.Name) }}">
+        <a href="{{ url_for('restaurant', restaurant_id=restaurant.RID) }}">
             <button>
                 {{restaurant.Name}}
-                <!-- Insert Distance -->
+                {% if restaurant.distance_miles is not none %}
+                    <p>Distance: {{ "%.1f"|format(restaurant.distance_miles) }} miles</p>
+                {% endif %}
             </button>
         </a>
         <br>
