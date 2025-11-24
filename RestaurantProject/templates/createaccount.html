@@ -102,20 +102,36 @@
         </section>
     </main>
 
-    <!-- Script to show/hide verification modal -->
+    <!-- Scripts to show/hide error message and verification modal -->
     <script>
-        const roleRadios = document.querySelectorAll('input[name="Role"]');
-        const modal = document.getElementById('verificationModal');
+    // Show modal if error exists
+    document.addEventListener('DOMContentLoaded', () => {
+        {% if error %}
+            document.getElementById('errorModal').style.display = 'flex';
+        {% endif %}
+    });
 
-        roleRadios.forEach(radio => {
-            radio.addEventListener('change', () => {
-                if(radio.value === 'EVENT_PLANNER' || radio.value === 'RESTAURANT_OWNER'){
-                    modal.style.display = 'block';
-                } else {
-                    modal.style.display = 'none';
-                }
-            });
+    // Close modal function
+    function closeErrorModal() {
+        document.getElementById('errorModal').style.display = 'none';
+    }
+
+    // Verification modal script
+    const roleRadios = document.querySelectorAll('input[name="Role"]');
+    const modal = document.getElementById('verificationModal');
+
+    roleRadios.forEach(radio => {
+        radio.addEventListener('change', () => {
+            if(radio.value === 'EVENT_PLANNER' || radio.value === 'RESTAURANT_OWNER'){
+                modal.style.display = 'block';
+                document.querySelector('input[name="verification_code"]').setAttribute("required", true);
+            } else {
+                modal.style.display = 'none';
+                document.querySelector('input[name="verification_code"]').removeAttribute("required");
+            }
         });
-    </script>
+    });
+</script>
+
 </body>
 </html>

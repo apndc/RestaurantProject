@@ -1,6 +1,14 @@
 import csv, os
-from db.server import get_session
+
+from db.server import get_session, engine
 from db.schema import *
+from db.schema import Base, EP_Verification, RO_Verification
+
+# --------------------------
+# Ensure all tables exist first
+# --------------------------
+Base.metadata.create_all(bind=engine)  # creates all tables registered in metadata, including EP/RO
+
 
 def readFile(fileName):
     with open(f"db/schema/imports/{fileName}.csv", newline="", encoding="utf-8") as f:
@@ -62,4 +70,7 @@ importData("Reservation")
 importData("Events")
 importData("Menu")
 
+# --------------------------
+# Populate verification tables last
+# --------------------------
 populate_verification()

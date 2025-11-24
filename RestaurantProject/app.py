@@ -1,8 +1,11 @@
-from flask import Flask, render_template, request, url_for, redirect, session, g
-import os, bcrypt, logging, re, requests
+from flask import Flask, render_template, request, url_for, redirect, session
+from flask import Flask, render_template, request, session, url_for, redirect
+import os, bcrypt, logging
+from sqlalchemy import func
 from sqlalchemy.orm import joinedload
 from sqlalchemy import func
 from dotenv import load_dotenv
+from db.schema import EP_Verification, RO_Verification
 from db.server import get_session
 from db.query import *
 from db.schema import *
@@ -15,6 +18,15 @@ load_dotenv()
 app = Flask(__name__)
 
 api_key = os.environ["GOOGLE_API_KEY"]
+from datetime import datetime, timedelta
+from functools import wraps
+load_dotenv()
+
+os.makedirs("logs", exist_ok=True)
+
+app = Flask(__name__)
+app.secret_key = os.environ.get("SECRET_KEY", "dev-key-chnange-me")
+api_key = os.environ.get("GOOGLE_API_KEY", "")
 
 # Key + Session Setup for Cookies
 app.secret_key = os.getenv("SECRET_KEY")
@@ -133,8 +145,8 @@ def error():
 @app.route('/createaccount', methods=["GET", "POST"])
 @guest_required
 def createaccount():
-    error: str = None
-    is_valid: bool = False
+    import re
+    error = None
 
     if request.method == 'POST':
         # Make A Location
@@ -143,14 +155,8 @@ def createaccount():
         
         location_data: dict = {}
 
-        valid_location = False
-        
-        for key, value in request.form.items():
-            if key == 'StreetName' or key == 'City' or key == 'State' or key == 'ZipCode':
-                location_data[key] = value.strip()
-        
         newLocation = Location(**location_data)
-        
+
         try:
             PGsession.add(newLocation)
             PGsession.flush()
@@ -231,33 +237,43 @@ def createaccount():
 
     return render_template('createaccount.html', error=error)
 
-#Delete SQL
-@app.route('/delete', methods=["GET", "POST"])
+# Delete current logged-in user
+@app.route('/delete', methods=["POST"])
 def delete():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    db = get_session()
     error = None
     message = None
-    if request.method == "POST":
-        try:
-            import codecs
-            email = request.form.get("Email").lower().strip()
 
-            user = get_one(Account, Email=email)
+    try:
+        # Get the logged-in user
+        user = db.query(Account).filter_by(UserID=session['user_id']).first()
 
-            userPw = request.form["Password"].encode('utf-8')
-            
-            if not user:
-                error = "No account found with that email."
-                logging.error(error)
-            else:
-                stored_hash_hex = user.Password
-                stored_hash_bytes = codecs.decode(stored_hash_hex.replace("\\x", ""), "hex")
-                
-                if bcrypt.checkpw(userPw, stored_hash_bytes):
-                    delete_one(user)
-                    message = f"Account with email {email} has been deleted."
-        except Exception as e:
-            logging.error(f"Error deleting user:, {e}")
-            error = "An error occured. Please try again"
+        if not user:
+            error = "User not found."
+            logging.error(error)
+        else:
+            # Delete user row
+            db.delete(user)
+            db.commit()
+            message = "Your account has been deleted successfully."
+
+            # Clear session
+            session.clear()
+
+            # Redirect to welcome page
+            return redirect(url_for('home'))
+
+    except Exception as e:
+        logging.error(f"Error deleting user: {e}")
+        error = "An error occurred. Please try again."
+
+    finally:
+        db.close()
+
+    # fallback if something went wrong
     return render_template("delete.html", error=error, message=message)
 
 #Login Page
@@ -265,12 +281,18 @@ def delete():
 @guest_required
 def login():
     if request.method == 'POST':
+        import codecs
+        email = request.form["Email"].lower()
+        password = request.form["Password"].encode('utf-8')
+
         try:
-            import codecs
-            # Get SQLAlchemy Object And See If The Email + Pass Combo Exists 
-            attempted_user = get_one(Account, Email=request.form["Email"].lower())
-            userPw = request.form["Password"].encode('utf-8')
-            
+            # Get user by email
+            attempted_user = get_one(Account, Email=email)
+
+            if attempted_user is None:
+                logging.error("No account found for that email.")
+                return redirect(url_for('login'))
+
             stored_hash_hex = attempted_user.Password
             stored_hash_bytes = codecs.decode(stored_hash_hex.replace("\\x", ""), "hex")
 
@@ -285,18 +307,90 @@ def login():
                 
                 return redirect(url_for('restaurant_page'))
             else:
-                logging.error(f"Wrong Password")
+                return redirect(url_for("home"))
+
         except Exception as e:
-            logging.error(f"An error has occurred: {e}")
+            logging.exception(f"Login error: {e}")
             return redirect(url_for('login'))
-        
+
     return render_template('login.html')
+
+@app.route('/profile')
+def profile():
+    # You can expand this later with user info
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    return render_template('profile.html', user_name=session.get('user_name'))
+
+@app.route('/landing')
+def user_landing():
+    db = get_session()
+
+    try: 
+        upcoming = []
+        try:
+            upcoming = (
+                db.query(Reservation).options(joinedload(Reservation.restaurant)).filter(Reservation.UserID == session['user_id'], Reservation.DateTime >= datetime.utcnow())
+                .order_by(Reservation.DateTime.asc()).limit(5).all()
+            )
+        except Exception:
+            upcoming = []
+        
+        cuisines = ["Italian" , "Chinese", "American", "BBQ", "Mexican"]
+        return render_template(
+            'user_landing.html', api_key=api_key,
+            user_name = session.get('user_name'), cuisines = cuisines, upcoming = upcoming
+        )
+
+    finally:
+        db.close()
+        
+# logout function for username on landing page
+@app.route('/logout')
+def logout():
+    """Log out the current user and redirect to Welcome page"""
+    session.clear() 
+    return redirect(url_for('home'))
+
+# Edit account function for username on landing page
+@app.route('/edit_account', methods=['GET', 'POST'])
+def edit_account():
+    """View and update the logged-in user's account information"""
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    db = get_session()
+    user = db.query(Account).filter_by(UserID=session['user_id']).first()
+    
+    if request.method == 'POST':
+        # update fields from form
+        user.FirstName = request.form['FirstName'].strip().upper()
+        user.LastName = request.form['LastName'].strip().upper()
+        user.PhoneNumber = request.form['PhoneNumber'].replace("-", "")
+        user.Email = request.form['Email'].lower()
+        db.commit()
+        
+        # update session name
+        session['user_name'] = f"{user.FirstName} {user.LastName}"
+        
+        return redirect(url_for('user_landing'))
+    
+    return render_template('edit_account.html', user=user)
 
 # General Events Page
 @app.route('/event')
 @login_required
 def eventpage():
-    return render_template('bookit-eventpage.html', api_key=api_key)
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    # Pull First Name from database
+    user_id = session['user_id']
+    user = get_one(Account, UserID=user_id)
+    first_name = f"{user.FirstName}" if user else "My Profile"
+    
+    return render_template('bookit-eventpage.html', user_name=first_name, api_key=api_key)
 
 # Event Page
 @app.route('/event/<int:event_id>')
@@ -357,7 +451,7 @@ def restaurant(restaurant_id):
     html = render_template('bookit-restaurant-template.html',
                        restaurant=restaurant, location=location, menuItems=menuItems,
                          categories=sorted_categories, fullLocation=fullLocation)
-    session.close()
+    db.close()
     return html
 
 # Reservation Page
