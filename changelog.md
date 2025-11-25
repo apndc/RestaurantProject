@@ -9,6 +9,7 @@
     * Also Fixed `Reservation` Import csv
 * Fixed `get_distance_miles`
 * Fixed Cookies + User Routing
+* Started Migrating `/delete` Into The Profile Page
 
 # CHANGES [v3.1.0]: 
 * Added Full Date and Time Field to Reservation

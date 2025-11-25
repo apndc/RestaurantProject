@@ -242,11 +242,14 @@ def createaccount():
     return render_template('createaccount.html', error=error)
 
 # Delete current logged-in user
-@app.route('/delete', methods=["POST"])
+@app.route('/delete')
 @login_required
 def delete():
-
-    delete_one(g.current_user)
+    
+    delete_one(Account, UserID=g.current_user.UserID)
+    session.clear()
+    
+    return redirect(url_for('home'))
 
 #Login Page
 @app.route('/login', methods=["GET", "POST"])
