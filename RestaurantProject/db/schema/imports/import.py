@@ -37,9 +37,6 @@ def importData(dataName):
     finally:
         session.close()
     
-# --------------------------
-# Insert dummy verification codes
-# --------------------------
 def populate_verification():
     session = get_session()
     try:

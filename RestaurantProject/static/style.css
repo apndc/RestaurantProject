@@ -6,6 +6,7 @@
   --white: #fff;
   --gray: #666;
   --black: #000;
+  --gold: #bba36b;
 }
 
 *,
@@ -186,6 +187,14 @@ footer a {
   text-decoration: underline;
 }
 
+.restaurant-title {
+  color: var(--gold);
+  font-size: 2rem;
+  text-align: center;
+  margin-bottom: 1rem;
+  text-shadow: #000 0px 1px 2px;
+}
+
 .restaurant-card {
   border: 1px solid #ddd;
   padding: 15px;
@@ -323,54 +332,14 @@ footer a {
   background: #5c431e;
 }
 
-.header_right .user_link{
+.logoutLink {
+  text-decoration: underline;
   color: var(--brown);
-  text-decoration: none;
-  font-weight: 600;
 }
 
-
-.res_list {display: grid; gap: 1.5rem;}
-
-
-.res_item{
-  background: #f8f7f3;
-  border: 1px solid #eadfbf;
+select {
+  width: auto;
+  padding: 0.5rem;
   border-radius: 5px;
-  padding: .5rem .6rem;
-  display: grid;
-  gap: 1.5rem;
-}
-
-
-.res_date{
-  font-weight: 600;
-}
-
-
-.res_destination{
-  color:var(--brown);
-}
-
-
-.res_size{
-  font-size: 0.9rem; color: var(--gray);
-}
-
-
-.cuisine_gird{
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-  gap: 1.5rem;
-}
-
-
-.cuisine_card{
-  display: grid;
-  place-items: center;
-  border: 2px solid var(--tan);
-  border-radius: 10px;
-  background: #fff;
-  padding: 1rem;
-  text-decoration: none;
+  border: 1px solid #ccc;
 }
