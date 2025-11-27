@@ -1,11 +1,8 @@
-from flask import Flask, render_template, request, url_for, redirect, session
-from flask import Flask, render_template, request, session, url_for, redirect
-import os, bcrypt, logging
+from flask import Flask, render_template, request, url_for, redirect, session, g
+import os, bcrypt, logging, requests
 from sqlalchemy import func
 from sqlalchemy.orm import joinedload
-from sqlalchemy import func
 from dotenv import load_dotenv
-from db.schema import EP_Verification, RO_Verification
 from db.server import get_session
 from db.query import *
 from db.schema import *
@@ -19,14 +16,8 @@ app = Flask(__name__)
 
 api_key = os.environ["GOOGLE_API_KEY"]
 from datetime import datetime, timedelta
-from functools import wraps
-load_dotenv()
 
 os.makedirs("logs", exist_ok=True)
-
-app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "dev-key-chnange-me")
-api_key = os.environ.get("GOOGLE_API_KEY", "")
 
 # Key + Session Setup for Cookies
 app.secret_key = os.getenv("SECRET_KEY")
@@ -85,15 +76,23 @@ def login_required(f):
         return f(*args, **kwargs)
     return wrapper
 
-def get_distance_miles(origin, **destinations):
+def get_distance_miles(origin, destinations):
     """
-    origin, destination: full address strings
-    returns: distance in miles (float) or None on failure
+    origin: full address strings
+    destinations: dict of destination full addresses
+    returns: distance from origin in miles (float) or None on failure for each address given
     """
+    
+    if not destinations:
+        return []
+
+    # Google expects destinations as a pipe-separated string
+    destinations_param = "|".join(destinations)
+
     url = "https://maps.googleapis.com/maps/api/distancematrix/json"
     params = {
         "origins": origin,
-        "destinations": destinations,
+        "destinations": destinations_param,
         "key": api_key,
         "units": "imperial"   
     }
@@ -101,19 +100,25 @@ def get_distance_miles(origin, **destinations):
     resp = requests.get(url, params=params)
     data = resp.json()
 
+    results = []
+
     try:
-        element = data["rows"][0]["elements"][0]
+        elements = data["rows"][0]["elements"]
+        for el in elements:
+            if el.get("status") != "OK":
+                results.append(None)
+                continue
 
-        if element["status"] != "OK":
-            return None
-
-        miles_text = element["distance"]["text"]  
-        
-        miles = float(miles_text.replace("mi", "").strip())
-        return miles
+            # "distance": {"text": "2.4 mi", "value": 3865}
+            meters = el["distance"]["value"]  
+            miles = meters / 1609.34          
+            
+            results.append(miles)
 
     except (KeyError, IndexError, ValueError):
-        return None
+        results = [None] * len(destinations)
+
+    return results
 
 
 def guest_required(f):
@@ -123,11 +128,6 @@ def guest_required(f):
             return redirect(url_for("restaurant_page"))
         return f(*args, **kwargs)
     return wrapper
-    
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect(url_for('home'))
 
 
 # Home page: BookIt Welcome
@@ -154,6 +154,10 @@ def createaccount():
         PGsession = get_session()
         
         location_data: dict = {}
+
+        for key, value in request.form.items():
+            if key in ('StreetName', 'City', 'State', 'ZipCode'):
+                location_data[key] = value.strip()
 
         newLocation = Location(**location_data)
 
@@ -238,43 +242,14 @@ def createaccount():
     return render_template('createaccount.html', error=error)
 
 # Delete current logged-in user
-@app.route('/delete', methods=["POST"])
+@app.route('/delete')
+@login_required
 def delete():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-
-    db = get_session()
-    error = None
-    message = None
-
-    try:
-        # Get the logged-in user
-        user = db.query(Account).filter_by(UserID=session['user_id']).first()
-
-        if not user:
-            error = "User not found."
-            logging.error(error)
-        else:
-            # Delete user row
-            db.delete(user)
-            db.commit()
-            message = "Your account has been deleted successfully."
-
-            # Clear session
-            session.clear()
-
-            # Redirect to welcome page
-            return redirect(url_for('home'))
-
-    except Exception as e:
-        logging.error(f"Error deleting user: {e}")
-        error = "An error occurred. Please try again."
-
-    finally:
-        db.close()
-
-    # fallback if something went wrong
-    return render_template("delete.html", error=error, message=message)
+    
+    delete_one(Account, UserID=g.current_user.UserID)
+    session.clear()
+    
+    return redirect(url_for('home'))
 
 #Login Page
 @app.route('/login', methods=["GET", "POST"])
@@ -288,6 +263,8 @@ def login():
         try:
             # Get user by email
             attempted_user = get_one(Account, Email=email)
+            userPw = request.form["Password"].encode('utf-8')
+            
 
             if attempted_user is None:
                 logging.error("No account found for that email.")
@@ -315,14 +292,6 @@ def login():
 
     return render_template('login.html')
 
-@app.route('/profile')
-def profile():
-    # You can expand this later with user info
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    
-    return render_template('profile.html', user_name=session.get('user_name'))
-
 @app.route('/landing')
 def user_landing():
     db = get_session()
@@ -331,7 +300,7 @@ def user_landing():
         upcoming = []
         try:
             upcoming = (
-                db.query(Reservation).options(joinedload(Reservation.restaurant)).filter(Reservation.UserID == session['user_id'], Reservation.DateTime >= datetime.utcnow())
+                db.query(Reservation).options(joinedload(Reservation.restaurant)).filter(Reservation.UserID == session['UserID'], Reservation.DateTime >= datetime.utcnow())
                 .order_by(Reservation.DateTime.asc()).limit(5).all()
             )
         except Exception:
@@ -357,11 +326,9 @@ def logout():
 @app.route('/edit_account', methods=['GET', 'POST'])
 def edit_account():
     """View and update the logged-in user's account information"""
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
     
     db = get_session()
-    user = db.query(Account).filter_by(UserID=session['user_id']).first()
+    user = db.query(Account).filter_by(UserID=session['UserID']).first()
     
     if request.method == 'POST':
         # update fields from form
@@ -371,9 +338,6 @@ def edit_account():
         user.Email = request.form['Email'].lower()
         db.commit()
         
-        # update session name
-        session['user_name'] = f"{user.FirstName} {user.LastName}"
-        
         return redirect(url_for('user_landing'))
     
     return render_template('edit_account.html', user=user)
@@ -382,15 +346,8 @@ def edit_account():
 @app.route('/event')
 @login_required
 def eventpage():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
     
-    # Pull First Name from database
-    user_id = session['user_id']
-    user = get_one(Account, UserID=user_id)
-    first_name = f"{user.FirstName}" if user else "My Profile"
-    
-    return render_template('bookit-eventpage.html', user_name=first_name, api_key=api_key)
+    return render_template('bookit-eventpage.html', api_key=api_key)
 
 # Event Page
 @app.route('/event/<int:event_id>')
@@ -402,20 +359,26 @@ def events(event_id):
 @login_required
 def restaurant_page():
 
-    session = get_session()
+    PGsession = get_session()
     
     try:
         sort = request.args.get('sort', 'name')
 
-        restaurants = session.query(RestaurantInfo).all()
+        restaurants = PGsession.query(RestaurantInfo).all()
         
         
-        user_location = session.query(Location).filter_by(LocationID = g.current_user.LocationID).first()
+        user_location = PGsession.query(Location).filter_by(LocationID = g.current_user.LocationID).first()
         user_full_address = full_location(user_location)
         
         for r in restaurants:
             r.full_address = full_location(r.location)
-            r.distance_miles = get_distance_miles(user_full_address, r.full_address)
+            
+        batch_addresses = [r.full_address for r in restaurants]
+        
+        distances = get_distance_miles(user_full_address, batch_addresses)
+
+        for i, r in enumerate(restaurants):
+            r.distance_miles = distances[i]
 
         # Sorts
         if sort == 'name':
@@ -432,14 +395,14 @@ def restaurant_page():
 
         return render_template('bookit-restaurant.html',restaurants=restaurants,current_sort=sort, api_key=api_key)
     finally:
-        session.close()
+        PGsession.close()
 
 # Individual Restaurant Page
 @app.route('/restaurant/<int:restaurant_id>')
 @login_required
 def restaurant(restaurant_id):
-    session = get_session()    
-    restaurant = session.query(RestaurantInfo).filter_by(RID=restaurant_id).first()
+    PGsession = get_session()    
+    restaurant = PGsession.query(RestaurantInfo).filter_by(RID=restaurant_id).first()
     location = restaurant.location
     fullLocation = full_location(location)
     menuItems = restaurant.menu
@@ -451,7 +414,7 @@ def restaurant(restaurant_id):
     html = render_template('bookit-restaurant-template.html',
                        restaurant=restaurant, location=location, menuItems=menuItems,
                          categories=sorted_categories, fullLocation=fullLocation)
-    db.close()
+    PGsession.close()
     return html
 
 # Reservation Page

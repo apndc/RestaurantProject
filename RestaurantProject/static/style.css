@@ -77,6 +77,11 @@ main.dashboard {
   margin: 0 auto;
 }
 
+.sort-buttons {
+  display:flex; 
+  gap:12px;
+}
+
 section {
   background: var(--white);
   border: 2px solid var(--tan);
