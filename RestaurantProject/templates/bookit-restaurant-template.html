@@ -52,6 +52,7 @@
                 {% endfor %}
             </div>
         </section>
+
 <!-- Reservation Section -->
 <section class="reservation-section">
     <button id="reserveBtn" class="reserve-button">Make Reservation</button>
@@ -76,8 +77,8 @@
             <input type="email" name="email" 
                 value="{{ session.get('user_email') }}" readonly>
 
-            <!-- Restaurant Name (Hidden, Auto-Filled) -->
-            <input type="hidden" name="restaurantName" value="{{ restaurant.Name }}">
+            <!-- Hidden restaurant ID to match Reservation.RID -->
+            <input type="hidden" name="RID" value="{{ restaurant.RID }}">
 
             <!-- Date -->
             <label>Reservation Date:</label>
@@ -91,11 +92,11 @@
             <label>Number of Guests:</label>
             <input type="number" name="guests" min="1" max="20" required>
 
-            <!-- Special Event -->
+            <!-- Special Occasion -->
             <label>Special Event (optional):</label>
             <input type="text" name="event" placeholder="Birthday, anniversary, etc.">
 
-            <!-- Accommodations -->
+            <!-- Special Requests -->
             <label>Special Accommodations (optional):</label>
             <textarea name="accommodations"
                 placeholder="Allergies, wheelchair access, high chair, etc."></textarea>

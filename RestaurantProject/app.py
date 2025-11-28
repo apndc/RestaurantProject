@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, url_for, redirect, session
 from flask import Flask, render_template, request, session, url_for, redirect
+from flask import flash
 import os, bcrypt, logging
 from sqlalchemy import func
 from sqlalchemy.orm import joinedload
@@ -10,7 +11,7 @@ from db.query import *
 from db.schema import *
 from werkzeug.utils import secure_filename
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from functools import wraps
 load_dotenv()
 
@@ -261,6 +262,83 @@ def profile():
 
 @app.route('/landing')
 def user_landing():
+
+    # --- Protect user without session ---
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    db = get_session()
+
+    try:
+        today = date.today()
+
+        try:
+            upcoming = (
+                db.query(Reservation)
+                .options(joinedload(Reservation.restaurant))
+                .filter(
+                    Reservation.UserID == session['user_id'],
+                    Reservation.ReservationDate >= today
+                )
+                .order_by(Reservation.ReservationDate.asc(),
+                          Reservation.ReservationTime.asc())
+                .limit(5)
+                .all()
+            )
+        except Exception as e:
+            print("Error getting reservations:", e)
+            upcoming = []
+
+        cuisines = ["Italian", "Chinese", "American", "BBQ", "Mexican"]
+
+        return render_template(
+            "user_landing.html",
+            api_key=api_key,
+            user_name=session.get("user_name", ""),
+            cuisines=cuisines,
+            upcoming=upcoming
+        )
+    finally:
+        db.close()
+
+''' SHOWS UPCOMING RESERVATIONS, NOTHING ELSE
+@app.route('/landing')
+def user_landing():
+    db = get_session()
+
+    try: 
+        upcoming = []
+        try:
+            upcoming = (
+                db.query(Reservation)
+                .options(joinedload(Reservation.restaurant))
+                .filter(
+                    Reservation.UserID == session['user_id'],
+                    Reservation.ReservationDate >= datetime.utcnow().date()
+                )
+                .order_by(Reservation.ReservationDate.asc(), Reservation.ReservationTime.asc())
+                .limit(5)
+                .all()
+            )
+        except Exception:
+            upcoming = []
+
+        cuisines = ["Italian", "Chinese", "American", "BBQ", "Mexican"]
+
+        return render_template(
+            'user_landing.html',
+            api_key=api_key,
+            user_name=session.get('user_name'),
+            cuisines=cuisines,
+            upcoming=upcoming
+        )
+
+    finally:
+        db.close()
+'''
+''' OLD LANDING SAVE TILL FINAL
+@app.route('/landing')
+def user_landing():
     db = get_session()
 
     try: 
@@ -281,7 +359,7 @@ def user_landing():
 
     finally:
         db.close()
-        
+'''        
 # logout function for username on landing page
 @app.route('/logout')
 def logout():
@@ -364,28 +442,55 @@ def restaurant(name):
     db.close()
     return html
 
-# Reservation Page
-@app.route('/reservation', methods=['GET', 'POST'])
+@app.route('/reservation', methods=['POST'])
 def reservation():
-    if request.method == 'POST':
-        # Access form data
-        name = request.form.get('name')
-        phone = request.form.get('phone')
-        email = request.form.get('email')
-        special = request.form.get('special')
-        card_number = request.form.get('cardNumber')
-        name_on_card = request.form.get('nameOnCard')
-        exp_date = request.form.get('expDate')
-        cvv = request.form.get('cvv')
-        updates = request.form.get('updates')
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
 
-        # Here you can save to a database or process the reservation
-        print(f"Reservation from {name}, phone {phone}, email {email}, special: {special}, updates: {updates}")
+    db = get_session()
 
-        return "Reservation submitted!"  # Or redirect to a confirmation page
+    try:
+        # Required fields from the form
+        user_id = session['user_id']
+        restaurant_id = int(request.form['RID'])
+        date_str = request.form['date']
+        time_str = request.form['time']
+        guests = int(request.form['guests'])
 
-    # GET request: render the reservation page
-    return render_template('bookit-reservepage.html')
+        # Optional fields
+        occasion = request.form.get('event', None)
+        special_requests = request.form.get('accommodations', None)
+
+        # Combine date + time into one datetime object
+        reservation_datetime = datetime.strptime(
+            f"{date_str} {time_str}",
+            "%Y-%m-%d %H:%M"
+        )
+
+        # Create a new reservation object
+        new_reservation = Reservation(
+            UserID=user_id,
+            RID=restaurant_id,
+            NumberOfGuests=guests,
+            ReservationDate=date_str,     
+            ReservationTime=time_str,      
+            SpecialOccasion=occasion,
+            SpecialRequests=special_requests
+        )
+
+        db.add(new_reservation)
+        db.commit()
+        flash("Reservation placed!", "success")
+        return redirect(url_for('user_landing'))
+
+    except Exception as e:
+        db.rollback()
+        flash("Oops! Something went wrong.", "error")
+        logging.error(f"Reservation error: {e}")
+        return redirect(url_for('error', errors=str(e)))
+
+    finally:
+        db.close()
 
 # TESTING STUFF DELETE LATER
 @app.route('/test')

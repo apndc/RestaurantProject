@@ -48,8 +48,8 @@
    <section class="calendar">
        <h3>Upcoming Reservations</h3>
 
-
-       {% if upcoming and upcoming|length %}
+        
+       {% if upcoming and upcoming|length >0 %}
        <div class="res_list">
            {% for r in upcoming %}
                <div class="res_item">
