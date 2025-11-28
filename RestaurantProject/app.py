@@ -172,11 +172,14 @@ def createaccount():
                 return render_template("createaccount.html", error=error)
         finally:
             PGsession.close()
-        # Make A User
+        # Make A User      
         FirstName=request.form["FirstName"].upper()
         LastName=request.form["LastName"].upper()
         PhoneNumber=request.form["PhoneNumber"]
         role = request.form.get("Role", "CUSTOMER").upper()
+        
+        #initialization of is_valid variable
+        is_valid = False
 
         if FirstName.isalpha() and LastName.isalpha() and PhoneNumber.isnumeric() and len(PhoneNumber) == 10:
             logging.info(f"Inputs {FirstName}, {LastName}, and {PhoneNumber} are valid.")
