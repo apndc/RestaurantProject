@@ -12,6 +12,11 @@ from functools import wraps
 from filters import register_filters
 load_dotenv()
 
+# Stored Stuff For Methods
+order = ["Appetizer", "Entree", "Dessert", "Drinks"]
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
+
+# Move Things Into a create_app function
 app = Flask(__name__)
 
 api_key = os.environ["GOOGLE_API_KEY"]
@@ -35,10 +40,6 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger(__name__)
-
-# Stored Stuff For Methods
-order = ["Appetizer", "Entree", "Dessert", "Drinks"]
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 
 # Initialize Filters
 register_filters(app)
