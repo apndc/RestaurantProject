@@ -14,7 +14,10 @@
         <section class="sign_page">
             <h1>Sign Up</h1>
             <form method="post" action="/createaccount" class="form-grid">
-
+                
+                <div id="errorModal">
+                    {{ error }}
+                </div>
                 <!-- First and Last Name -->
                 <div class="form-grid two-col">
                     <div>
