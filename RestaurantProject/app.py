@@ -56,6 +56,33 @@ def guest_required(f):
         return f(*args, **kwargs)
     return wrapper
 
+def owner_required(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        user = get_one(Account, UserID=session.get("UserID"))
+        if user.Role != 'RESTAURANT_OWNER':
+            return redirect(url_for('dashboard'))
+        return f(*args, **kwargs)
+    return wrapper
+
+def customer_required(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        user = get_one(Account, UserID=session.get("UserID"))
+        if user.Role != 'CUSTOMER':
+            return redirect(url_for('dashboard'))
+        return f(*args, **kwargs)
+    return wrapper
+
+def event_required(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        user = get_one(Account, UserID=session.get("UserID"))
+        if user.Role != 'EVENT_PLANNER':
+            return redirect(url_for('dashboard'))
+        return f(*args, **kwargs)
+    return wrapper
+
 def get_distance_miles(origin, destinations):
     """
     origin: full address strings
@@ -179,9 +206,9 @@ def create_app():
             finally:
                 PGsession.close()
             # Make A User
-            FirstName=request.form["FirstName"].upper()
-            LastName=request.form["LastName"].upper()
-            PhoneNumber=request.form["PhoneNumber"]
+            FirstName=request.form["FirstName"].strip().upper()
+            LastName=request.form["LastName"].strip().upper()
+            PhoneNumber=request.form["PhoneNumber"].strip()
             role = request.form.get("Role", "CUSTOMER").upper()
 
             if FirstName.isalpha() and LastName.isalpha() and PhoneNumber.isnumeric() and len(PhoneNumber) == 10:
@@ -244,13 +271,7 @@ def create_app():
                 
                 role = (newUser.Role or "CUSTOMER").strip().upper()
 
-                if role == "EVENT_PLANNER":
-                    return redirect(url_for('eventpage'))
-                elif role == "RESTAURANT_OWNER":
-                    return redirect(url_for('restaurant_page'))
-                else:
-                    # default: normal customer – you can change this to a /landing later
-                    return redirect(url_for('restaurant_page'))
+                return redirect_dashboard()
 
         return render_template('createaccount.html', error=error)
 
@@ -295,7 +316,7 @@ def create_app():
                     # Additional Logging Info
                     logging.info(f"User {attempted_user.Email} logged in successfully.")
                     
-                    return redirect(url_for('restaurant_page'))
+                    return redirect(url_for('dashboard'))
                 else:
                     return redirect(url_for("home"))
 
@@ -306,6 +327,8 @@ def create_app():
         return render_template('login.html')
 
     @app.route('/landing')
+    @login_required
+    @customer_required
     def user_landing():
         db = get_session()
 
@@ -326,6 +349,17 @@ def create_app():
 
         finally:
             db.close()
+
+    def redirect_dashboard():
+        role = g.current_user.Role.lower()
+
+        if role == 'event_planner':
+            return redirect(url_for('eventpage'))
+        elif role == 'restaurant_owner':
+            return redirect(url_for('owner_landing'))
+        else:
+            return redirect(url_for('user_landing'))
+
             
     # logout function for username on landing page
     @app.route('/logout')
@@ -350,25 +384,29 @@ def create_app():
             user.Email = request.form['Email'].lower()
             db.commit()
             
-            return redirect(url_for('user_landing'))
+            return redirect_dashboard()
         
         return render_template('edit_account.html', user=user)
 
     # General Events Page
     @app.route('/event')
     @login_required
+    @event_required
     def eventpage():
         
         return render_template('bookit-eventpage.html', api_key=api_key)
 
     # Event Page
     @app.route('/event/<int:event_id>')
+    @login_required
+    @event_required
     def events(event_id):
         return render_template('bookit-eventpage.html', api_key=api_key, event_id=event_id)
 
     # Restaurant Overview
     @app.route('/restaurant')
     @login_required
+    @customer_required
     def restaurant_page():
 
         PGsession = get_session()
@@ -457,11 +495,11 @@ def create_app():
     @app.route('/profile')
     @login_required
     def profile():
-        user = g.current_user
-        return render_template('profile.html', user=user)
+        return render_template('profile.html')
 
     @app.route('/restaurantform', methods=['GET', 'POST'])
     @login_required
+    @owner_required
     def restaurant_form():
         error = None
         message = None
@@ -525,6 +563,33 @@ def create_app():
     def test():
         return render_template('test.html')
     
+    
+    @app.route('/owner_landing')
+    @login_required
+    @owner_required
+    def owner_landing():
+        db = get_session()
+
+        try:
+            user = g.current_user
+            if user.Role.strip().lower() != 'restaurant_owner':
+                return redirect(url_for('home'))
+
+            restaurants=(
+                db.query(RestaurantInfo).filter(RestaurantInfo.UserID == user.UserID).all()
+            )
+
+            return render_template(
+                'owner_landing.html', user_name=f"{user.FirstName} {user.LastName}", restaurants=restaurants
+            )
+        finally:
+            db.close()
+
+    @app.route('/dashboard')
+    @login_required
+    def dashboard():
+        return redirect_dashboard()
+
     return app
 
 #Debug stuff (given to us)

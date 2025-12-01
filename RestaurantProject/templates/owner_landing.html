@@ -1,0 +1,49 @@
+{% extends "header.html" %}
+{% block title %}BookIt — My Restaurants {% endblock %}
+{% block content %}
+
+    <main class="owner_landing">
+        <section class="restaurants" style = "grid-column: 1/-1;">
+            <h3> My Restaurants</h3>
+            {% if restaurants %}
+                <div class="res_list">
+                    {% for r in restaurants %}
+                    <article class="res_item">
+                        <div>
+                            <div class="res_destination"> {{r.Name}} </div>
+
+                            {% if r.location %}
+                            <div class="res_size">
+                                {{r.location.StreetName}},
+                                {{r.location.City}},
+                                {{r.location.State}},
+                                {{r.location.ZipCode}}
+
+
+                            </div>
+                            {% endif %}
+
+                            {% if r.Cuisine %}
+
+                            <div class="res_size">
+                                Cuisine: {{ r.Cuisine }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div style="display: flex; gap:0.5rem; align-items: center;">
+                            <a href="{{url_for('restaurant', restaurant_id = r.RID)}}" class="welcome_page button" style="padding:0.4rem 0.8rem;">
+                                View Page
+                            </a>
+                            
+                        </div>
+                    </article>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p>You don't have any restaurants yet? Let's Change that!</p>
+                {% endif %}
+
+                
+        </section> 
+    </main>
+{% endblock %}

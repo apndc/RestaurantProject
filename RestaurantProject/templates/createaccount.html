@@ -16,7 +16,9 @@
             <form method="post" action="/createaccount" class="form-grid">
                 
                 <div id="errorModal">
+                    {% if error %}
                     {{ error }}
+                    {% endif %}
                 </div>
                 <!-- First and Last Name -->
                 <div class="form-grid two-col">

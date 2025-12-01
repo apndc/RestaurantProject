@@ -1,6 +1,6 @@
-import csv, os
+import csv
 
-from db.server import get_session
+from db.server import get_session, engine
 from db.schema import *
 from db.schema import Base, EP_Verification, RO_Verification
 from .reset_tables import reset_all
@@ -34,6 +34,19 @@ def importData(dataName):
         print(f"Error inserting {dataName}", e)
     finally:
         session.close()
+        
+# --------------------------
+# Ensure Verification Tables Exist
+# --------------------------
+def ensure_verification_tables():
+    """
+    Check if EP_Verification and RO_Verification exist,
+    create them if missing.
+    """
+    Base.metadata.create_all(bind=engine,
+                             tables=[EP_Verification.__table__, RO_Verification.__table__],
+                             checkfirst=True)
+    print("EP_Verification and RO_Verification tables ensured.")
     
 def populate_verification():
     session = get_session()
@@ -69,6 +82,7 @@ importData("Events")
 importData("Menu")
 
 # --------------------------
-# Populate verification tables last
+# Ensure EP/RO tables exist & Populate verification tables last
 # --------------------------
+ensure_verification_tables()
 populate_verification()
