@@ -293,31 +293,7 @@ def user_landing():
 
     finally:
         db.close()
-
-''' OLD LANDING SAVE TILL FINAL
-@app.route('/landing')
-def user_landing():
-    db = get_session()
-
-    try: 
-        upcoming = []
-        try:
-            upcoming = (
-                db.query(Reservation).options(joinedload(Reservation.restaurant)).filter(Reservation.UserID == session['user_id'], Reservation.DateTime >= datetime.utcnow())
-                .order_by(Reservation.DateTime.asc()).limit(5).all()
-            )
-        except Exception:
-            upcoming = []
-        
-        cuisines = ["Italian" , "Chinese", "American", "BBQ", "Mexican"]
-        return render_template(
-            'user_landing.html', api_key=api_key,
-            user_name = session.get('user_name'), cuisines = cuisines, upcoming = upcoming
-        )
-
-    finally:
-        db.close()
-'''        
+    
 # logout function for username on landing page
 @app.route('/logout')
 def logout():
