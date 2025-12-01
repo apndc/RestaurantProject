@@ -1,22 +1,13 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>User Profile</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
-  <header>
-    <a href="{{ url_for('user_landing') }}" class="logo">🍽️ BookIt</a>
-  </header>
-
-  <main>
-    <section class="profile">
-      <h2>Welcome, {{ user_name }}!</h2>
-      <p>This is your profile page. You can add account info, preferences, or reservation history here.</p>
-      <a href="{{ url_for('logout') }}">Logout</a>
-    </section>
-  </main>
-</body>
-</html>
+{% extends "header.html" %}
+{% block title %}BookIt — Profile{% endblock %}
+{% block content %}
+    <div class="restaurant-card">
+        <h1>Account Info</h1>
+        <p>First Name: {{ user.FirstName | name_format}}</p>
+        <p>Last Name: {{ user.LastName | name_format}}</p>
+        <p>Email: {{ user.Email }}</p>
+        <p>Phone: {{ user.PhoneNumber | phone_format}}</p>
+        <br>
+        <a class="logoutLink" href="{{ url_for('logout') }}">Logout</a> 
+    </div>
+{% endblock %}

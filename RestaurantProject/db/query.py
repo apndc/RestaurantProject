@@ -19,7 +19,7 @@ def get_all(table) -> list:
     finally:
         session.close()
 
-def insert(record) -> None:
+def insert(record) -> object:
     """Insert One Record into a Table
     """
     session = get_session()
@@ -27,7 +27,8 @@ def insert(record) -> None:
     try: 
         session.add(record)
         session.commit()
-    
+        session.refresh(record)
+        return record
     except Exception as e:
         session.rollback()
         print("Error Inserting Records:", e)
@@ -46,15 +47,15 @@ def get_one(table, **filters) -> object:
     finally:
         session.close()
 
-def delete_one(record):
-
+def delete_one(model, **filters):
     session = get_session()
-
-    try: 
-        session.delete(record)
-        session.commit()
+    try:
+        obj = session.query(model).filter_by(**filters).first()
+        if obj:
+            session.delete(obj)
+            session.commit()
     except Exception as e:
         session.rollback()
-        print("Error Inserting Records:", e)
+        print("Error deleting record:", e)
     finally:
         session.close()

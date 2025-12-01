@@ -1,13 +1,11 @@
 import csv, os
 
-from db.server import get_session, engine
+from db.server import get_session
 from db.schema import *
 from db.schema import Base, EP_Verification, RO_Verification
+from .reset_tables import reset_all
 
-# --------------------------
-# Ensure all tables exist first
-# --------------------------
-Base.metadata.create_all(bind=engine)  # creates all tables registered in metadata, including EP/RO
+reset_all()
 
 
 def readFile(fileName):
@@ -37,9 +35,6 @@ def importData(dataName):
     finally:
         session.close()
     
-# --------------------------
-# Insert dummy verification codes
-# --------------------------
 def populate_verification():
     session = get_session()
     try:
