@@ -271,7 +271,7 @@ def create_app():
                 
                 role = (newUser.Role or "CUSTOMER").strip().upper()
 
-                return redirect_dashboard()
+                return redirect(url_for('dashboard'))
 
         return render_template('createaccount.html', error=error)
 
@@ -351,6 +351,7 @@ def create_app():
             db.close()
 
     def redirect_dashboard():
+
         role = g.current_user.Role.lower()
 
         if role == 'event_planner':
@@ -384,7 +385,7 @@ def create_app():
             user.Email = request.form['Email'].lower()
             db.commit()
             
-            return redirect_dashboard()
+            return redirect(url_for('dashboard'))
         
         return render_template('edit_account.html', user=user)
 
