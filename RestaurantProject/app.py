@@ -262,48 +262,6 @@ def profile():
 
 @app.route('/landing')
 def user_landing():
-
-    # --- Protect user without session ---
-    if "user_id" not in session:
-        return redirect(url_for("login"))
-
-    db = get_session()
-
-    try:
-        today = date.today()
-
-        try:
-            upcoming = (
-                db.query(Reservation)
-                .options(joinedload(Reservation.restaurant))
-                .filter(
-                    Reservation.UserID == session['user_id'],
-                    Reservation.ReservationDate >= today
-                )
-                .order_by(Reservation.ReservationDate.asc(),
-                          Reservation.ReservationTime.asc())
-                .limit(5)
-                .all()
-            )
-        except Exception as e:
-            print("Error getting reservations:", e)
-            upcoming = []
-
-        cuisines = ["Italian", "Chinese", "American", "BBQ", "Mexican"]
-
-        return render_template(
-            "user_landing.html",
-            api_key=api_key,
-            user_name=session.get("user_name", ""),
-            cuisines=cuisines,
-            upcoming=upcoming
-        )
-    finally:
-        db.close()
-
-''' SHOWS UPCOMING RESERVATIONS, NOTHING ELSE
-@app.route('/landing')
-def user_landing():
     db = get_session()
 
     try: 
@@ -335,7 +293,7 @@ def user_landing():
 
     finally:
         db.close()
-'''
+
 ''' OLD LANDING SAVE TILL FINAL
 @app.route('/landing')
 def user_landing():

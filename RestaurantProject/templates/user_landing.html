@@ -46,47 +46,44 @@
 
  <main>
    <section class="calendar">
-       <h3>Upcoming Reservations</h3>
+    <h3>Upcoming Reservations</h3>
 
-        
-       {% if upcoming and upcoming|length >0 %}
-       <div class="res_list">
-           {% for r in upcoming %}
-               <div class="res_item">
-                   <div class="res_date">
-                       {{r.DateTime.strftime("%a, %b, %d * %I:%M %p") if r.DateTime else "TBD"}}
-                   </div>
-                   <div class="res_destination">
-                       {{r.restaurant.Name if r.restaurant else "Restaurant"}}
-                   </div>
-                   <div class="res_size">
-                       Party: {{r.PartySize if r.PartySize else "N/A"}}
-                   </div>
-               </div>
-               {% endfor %}
-       </div>
-       {% else %}
-           <p style="margin:0.5rem 0;">No upcoming reservations <a href="{{ url_for('restaurant_page') }}">Find a table</a></p>
-   </section>
-
-
-   <section class="restaurants">
-       <h3>Browse by Cuisine</h3>
-       <div class="cuisine_grid">
-           {% for c in cuisines %}
-               <a class="cuisine_card" href="{{url_for('restaurant_page')}}?cuisine={{ c }}">
-                   <div class="cusine_name">{{ c }}</div>
-               </a>
-               {% endfor %}
-       </div>
-   </section>
-
-
-   <section class="venues">
-       <h3>Popular Nearby</h3>
-       <p> Use <em>Browse by Cuisine</em> to filter, or view <a href="{{ url_for('restaurant_page') }}">all</a></p>
+    {% if upcoming and upcoming|length > 0 %}
+    <div class="res_list">
+        {% for r in upcoming %}
+            <div class="res_item">
+                <div class="res_date">
+                    {{r.DateTime.strftime("%a, %b, %d * %I:%M %p") if r.DateTime else "TBD"}}
+                </div>
+                <div class="res_destination">
+                    {{r.restaurant.Name if r.restaurant else "Restaurant"}}
+                </div>
+                <div class="res_size">
+                    Party: {{r.PartySize if r.PartySize else "N/A"}}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    {% else %}
+        <p style="margin:0.5rem 0;">No upcoming reservations <a href="{{ url_for('restaurant_page') }}">Find a table</a></p>
     {% endif %}
-   </section>
+</section>
+
+<section class="restaurants">
+    <h3>Browse by Cuisine</h3>
+    <div class="cuisine_grid">
+        {% for c in cuisines %}
+        <a class="cuisine_card" href="{{url_for('restaurant_page')}}?cuisine={{ c }}">
+            <div class="cusine_name">{{ c }}</div>
+        </a>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="venues">
+    <h3>Popular Nearby</h3>
+    <p>Use <em>Browse by Cuisine</em> to filter, or view <a href="{{ url_for('restaurant_page') }}">all</a></p>
+</section>
   
  </main>
 
