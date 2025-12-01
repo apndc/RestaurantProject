@@ -271,7 +271,7 @@ def create_app():
                 
                 role = (newUser.Role or "CUSTOMER").strip().upper()
 
-                return redirect_dashboard()
+                return redirect(url_for(dashboard))
 
         return render_template('createaccount.html', error=error)
 
