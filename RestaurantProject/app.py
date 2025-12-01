@@ -457,8 +457,7 @@ def create_app():
     @app.route('/profile')
     @login_required
     def profile():
-        user = g.current_user
-        return render_template('profile.html', user=user)
+        return render_template('profile.html')
 
     @app.route('/restaurantform', methods=['GET', 'POST'])
     @login_required

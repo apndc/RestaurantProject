@@ -3,10 +3,10 @@
 {% block content %}
     <div class="restaurant-card">
         <h1>Account Info</h1>
-        <p>First Name: {{ user.FirstName | name_format}}</p>
-        <p>Last Name: {{ user.LastName | name_format}}</p>
-        <p>Email: {{ user.Email }}</p>
-        <p>Phone: {{ user.PhoneNumber | phone_format}}</p>
+        <p>First Name: {{ g.current_user.FirstName | name_format}}</p>
+        <p>Last Name: {{ g.current_user.LastName | name_format}}</p>
+        <p>Email: {{ g.current_user.Email }}</p>
+        <p>Phone: {{ g.current_user.PhoneNumber | phone_format}}</p>
         <br>
         <a class="logoutLink" href="{{ url_for('logout') }}">Logout</a> 
     </div>
