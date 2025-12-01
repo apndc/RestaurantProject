@@ -206,9 +206,9 @@ def create_app():
             finally:
                 PGsession.close()
             # Make A User
-            FirstName=request.form["FirstName"].upper()
-            LastName=request.form["LastName"].upper()
-            PhoneNumber=request.form["PhoneNumber"]
+            FirstName=request.form["FirstName"].strip().upper()
+            LastName=request.form["LastName"].strip().upper()
+            PhoneNumber=request.form["PhoneNumber"].strip()
             role = request.form.get("Role", "CUSTOMER").upper()
 
             if FirstName.isalpha() and LastName.isalpha() and PhoneNumber.isnumeric() and len(PhoneNumber) == 10:
@@ -271,13 +271,7 @@ def create_app():
                 
                 role = (newUser.Role or "CUSTOMER").strip().upper()
 
-                if role == "EVENT_PLANNER":
-                    return redirect(url_for('eventpage'))
-                elif role == "RESTAURANT_OWNER":
-                    return redirect(url_for('restaurant_page'))
-                else:
-                    # default: normal customer – you can change this to a /landing later
-                    return redirect(url_for('restaurant_page'))
+                return redirect_dashboard()
 
         return render_template('createaccount.html', error=error)
 
