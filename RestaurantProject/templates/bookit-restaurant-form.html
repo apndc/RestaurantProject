@@ -1,7 +1,7 @@
 {% extends "header.html" %}
 {% block title %}BookIt — Create Page{% endblock %}
 {% block content %}
-    <script src="script.js"></script>
+    <script src="formScript.js"></script>
     <!-- Fields are UserID, LocationID, Name, Description PhoneNumber, Cuisine, Capacity, Fee -->
     <div class="restaurant-card">
         <h1>Create a New Restaurant</h1>   
@@ -39,8 +39,35 @@
 
             <label for="Fee">Booking Fee:</label><br>
             <input type="number" step="0.01" id="Fee" name="Fee" required min="0"><br><br>
+            
+            <div id="items-container">
+                <div class="item-row">
+                    <h4>Item 1</h4>
 
-            <input type="submit" value="Create Restaurant">
+                    <label>Item Name</label>
+                    <input type="text" name="item_name[]" required>
+
+                    <label>Price</label>
+                    <input type="number" name="item_price[]" step="0.01" min="0" required>
+
+                    <label>Category</label>
+                    <select name="item_category[]" required>
+                        <option value="">-- Select category --</option>
+                        <option value="Appetizer">Appetizer</option>
+                        <option value="Entree">Entree</option>
+                        <option value="Dessert">Dessert</option>
+                        <option value="Drinks">Drinks</option>
+                    </select>
+
+                    <label>Description</label>
+                    <textarea name="item_description[]" rows="2"></textarea>
+                </div>
+            </div>
+            
+            <div>
+                <button type="button" onclick="addItem()">Add Item</button> 
+                <input type="submit" value="Create Restaurant">
+            </div>
         </form>
     </div>
 {% endblock %}
