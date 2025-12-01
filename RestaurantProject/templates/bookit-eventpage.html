@@ -234,7 +234,7 @@
 <body>
  <header style="display:flex; justify-content:space-between; align-items:center; padding:1rem 2rem; background:var(--tan); border-bottom:2px solid #bba36b;">
   <!-- Logo -->
-  <a href="{{ url_for('home') }}" class="logo">🍽️ BookIt</a>
+  <a href="{{ url_for('dashboard') if session.get('user_id') else url_for('home') }}" class="logo">🍽️ BookIt</a>
 
   <!-- User Menu -->
   <div style="position:relative;">

@@ -25,7 +25,7 @@
  <header>
     <nav style="display:flex; justify-content:space-between; align-items:center; padding:10px 20px; background:#f8f8f8; border-bottom:1px solid #ddd; width:100%;">
     <!-- Logo -->
-    <a href="{{ url_for('user_landing') }}" class="logo">🍽️ BookIt</a>
+    <a href="{{ url_for('dashboard') if session.get('user_id') else url_for('home') }}" class="logo">🍽️ BookIt</a>
 
     <!-- User Menu container aligned to top-right -->
     <div style="margin-left:auto; position:relative;">

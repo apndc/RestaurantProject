@@ -7,7 +7,7 @@
 
 <body>
 <header>
-    <a href="{{ url_for('user_landing') }}" class="logo">🍽️ BookIt</a>
+    <a href="{{ url_for('dashboard') if session.get('user_id') else url_for('home') }}" class="logo">🍽️ BookIt</a>
 </header>
 
 <main class="sign_page">

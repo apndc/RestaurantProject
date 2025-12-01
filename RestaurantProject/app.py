@@ -31,6 +31,23 @@ logger = logging.getLogger(__name__)
 order = ["Appetizer", "Entree", "Dessert", "Drinks"]
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 
+
+def redirect_dashboard():
+    role = session.get('role','').lower()
+
+    if role == 'event_planner':
+        return redirect(url_for('eventpage'))
+    elif role == 'restaurant_owner':
+        return redirect(url_for('owner_landing'))
+    else:
+        return redirect(url_for('user_landing'))
+
+
+@app.route('/dashboard')
+def dashboard():
+    if 'user_id' not in session:
+        return redirect(url_for('home'))
+    return redirect_dashboard()
 # Limit Extensions
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -152,15 +169,18 @@ def createaccount():
         session["user_id"] = user.UserID
         session["user_email"] = user.Email
         session["user_name"] = f"{user.FirstName} {user.LastName}"
+        session["role"] = user.Role.strip().lower()
+
+        return redirect_dashboard()
 
         # --- Step 6: Role-based redirect ---
-        if role == "EVENT_PLANNER":
+        '''if role == "EVENT_PLANNER":
             return redirect(url_for("eventpage"))
         elif role == "RESTAURANT_OWNER":
-            return redirect(url_for("restaurant_page"))
+            return redirect(url_for("owner_landing"))
         else:
             #default = normal customer
-            return redirect(url_for("user_landing"))
+            return redirect(url_for("user_landing"))'''
         
     # GET request: render signup page
     return render_template('createaccount.html')
@@ -230,26 +250,53 @@ def login():
             session['user_id'] = attempted_user.UserID
             session['user_email'] = attempted_user.Email
             session['user_name'] = f"{attempted_user.FirstName} {attempted_user.LastName}"
+            session['role'] = attempted_user.Role.strip().lower()
             
             role = attempted_user.Role.strip().lower()
 
-            if role == "event_planner":
+            return redirect_dashboard()
+
+            '''if role == "event_planner":
                 return redirect(url_for("eventpage"))
 
             elif role == "restaurant_owner":
-                return redirect(url_for("restaurant_page"))
+                return redirect(url_for("owner_landing"))
 
             elif role == "customer":
                 return redirect(url_for("user_landing"))
            
             else:
-                return redirect(url_for("home"))
+                return redirect(url_for("home"))'''
+
 
         except Exception as e:
             logging.exception(f"Login error: {e}")
             return redirect(url_for('login'))
 
     return render_template('login.html')
+
+@app.route('/owner_landing')
+def owner_landing():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    db = get_session()
+
+    try:
+        user = db.query(Account).filter_by(UserID=session['user_id']).first()
+        if not user or user.Role.strip().lower() != 'restaurant_owner':
+            return redirect(url_for('home'))
+
+        restaurants=(
+            db.query(RestaurantInfo).options(joinedload(RestaurantInfo.location)).filter(RestaurantInfo.UserID == user.UserID).all()
+        )
+
+        return render_template(
+            'owner_landing.html', user_name=f"{user.FirstName} {user.LastName}", restaurants=restaurants
+        )
+    finally:
+        db.close()
+
 
 @app.route('/profile')
 def profile():
@@ -309,8 +356,9 @@ def edit_account():
         
         # update session name
         session['user_name'] = f"{user.FirstName} {user.LastName}"
+        session['role'] = user.Role.strip().lower()
         
-        return redirect(url_for('user_landing'))
+        return redirect_dashboard()
     
     return render_template('edit_account.html', user=user)
 
