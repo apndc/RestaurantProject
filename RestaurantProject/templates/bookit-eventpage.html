@@ -20,7 +20,7 @@
   <!-- User Menu -->
   <div style="position:relative;">
     <button id="userMenuBtn" style="background:none; border:none; cursor:pointer; color:var(--brown); font-weight:bold;">
-      {{ user.FirstName or 'My Profile' }} ▼
+      {{ current_user.FirstName or 'My Profile' }} ▼
     </button>
 
     <!-- Dropdown Menu -->
