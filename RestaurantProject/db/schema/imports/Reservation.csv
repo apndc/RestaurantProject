@@ -1,5 +1,6 @@
-UserID,RID,NumberOfGuests,Date
-1,1,2,2026-01-15T14:32:00
-2,1,4,2026-02-03T09:10:45
-4,2,3,2026-03-21T18:55:30
-1,3,2,2026-04-07T12:05:15
+UserID,RID,NumberOfGuests,ReservationDate,ReservationTime,SpecialOccasion,SpecialRequests
+1,1,2,2025-12-01,18:30,Birthday,Gluten-free meal
+2,2,4,2025-12-05,20:00,,Wheelchair accessible seating
+3,3,3,2025-12-10,17:45,Anniversary,
+4,4,6,2025-12-03,19:15,,Nut allergy
+5,5,1,2025-12-07,12:00,Graduation,	
