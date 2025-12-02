@@ -59,29 +59,35 @@ def guest_required(f):
 def owner_required(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
-        user = get_one(Account, UserID=session.get("UserID"))
-        if user.Role != 'RESTAURANT_OWNER':
-            return redirect(url_for('dashboard'))
+        user = getattr(g, "current_user", None)
+        role = (getattr(user, "Role", "") or "").strip().upper()
+        if user is None or role != "RESTAURANT_OWNER":
+            return redirect(url_for("dashboard"))
         return f(*args, **kwargs)
     return wrapper
+
 
 def customer_required(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
-        user = get_one(Account, UserID=session.get("UserID"))
-        if user.Role != 'CUSTOMER':
-            return redirect(url_for('dashboard'))
+        user = getattr(g, "current_user", None)
+        role = (getattr(user, "Role", "") or "").strip().upper()
+        if user is None or role != "CUSTOMER":
+            return redirect(url_for("dashboard"))
         return f(*args, **kwargs)
     return wrapper
+
 
 def event_required(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
-        user = get_one(Account, UserID=session.get("UserID"))
-        if user.Role != 'EVENT_PLANNER':
-            return redirect(url_for('dashboard'))
+        user = getattr(g, "current_user", None)
+        role = (getattr(user, "Role", "") or "").strip().upper()
+        if user is None or role != "EVENT_PLANNER":
+            return redirect(url_for("dashboard"))
         return f(*args, **kwargs)
     return wrapper
+
 
 def get_distance_miles(origin, destinations):
     """
@@ -358,7 +364,7 @@ def create_app():
             return redirect(url_for("login"))
 
         role = (user.Role or "").strip().lower()
-    
+
         if role == 'event_planner':
             return redirect(url_for('eventpage'))
         elif role == 'restaurant_owner':
