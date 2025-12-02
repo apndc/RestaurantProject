@@ -1,8 +1,10 @@
 ## TO-DO:
 * Fix Some Filters
-* Add Menu Items
-* Add Route Decorators That Specifically Make Pages Available Based On Role
-* Fix Routing + Merge ***User Land*** + ***Restaurant Listings*** 
+* Add Menu Items 
+
+# CHANGES [v4.0.0]
+* Consistent State
+* Run `` within Scope of tests Folder to Run Pytests
 
 # CHANGES [v3.1.1]:
 * Changed `import.py` To Also Reset Tables Beforehand To Ensure

@@ -352,8 +352,13 @@ def create_app():
 
     def redirect_dashboard():
 
-        role = g.current_user.Role.lower()
+        user = getattr(g, "current_user", None)
+        if user is None:
+            # Session is stale or user deleted – force login
+            return redirect(url_for("login"))
 
+        role = (user.Role or "").strip().lower()
+    
         if role == 'event_planner':
             return redirect(url_for('eventpage'))
         elif role == 'restaurant_owner':
