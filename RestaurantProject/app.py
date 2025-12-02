@@ -52,7 +52,7 @@ def guest_required(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
         if session.get("UserID"):
-            return redirect(url_for("restaurant_page"))
+            return redirect(url_for("dashboard"))
         return f(*args, **kwargs)
     return wrapper
 
@@ -351,7 +351,7 @@ def create_app():
                     db.query(Reservation)
                     .options(joinedload(Reservation.restaurant))
                     .filter(
-                        Reservation.UserID == session['user_id'],
+                        Reservation.UserID == session['UserID'],
                         Reservation.ReservationDate >= datetime.utcnow().date()
                     )
                     .order_by(Reservation.ReservationDate.asc(), Reservation.ReservationTime.asc())
@@ -504,14 +504,14 @@ def create_app():
     @app.route('/reservation', methods=['GET', 'POST'])
     @login_required
     def reservation():
-        if 'user_id' not in session:
+        if 'UserID' not in session:
             return redirect(url_for('login'))
 
         db = get_session()
 
         try:
             # Required fields from the form
-            user_id = session['user_id']
+            UserID = session['UserID']
             restaurant_id = int(request.form['RID'])
             date_str = request.form['date']
             time_str = request.form['time']
@@ -529,7 +529,7 @@ def create_app():
 
             # Create a new reservation object
             new_reservation = Reservation(
-                UserID=user_id,
+                UserID=UserID,
                 RID=restaurant_id,
                 NumberOfGuests=guests,
                 ReservationDate=date_str,     
@@ -564,7 +564,7 @@ def create_app():
         if request.method == 'POST':
             try:
                 # Fields are UserID, LocationID, Name, Description PhoneNumber, Cuisine, Capacity, Fee
-                user_id = g.current_user.UserID
+                UserID = g.current_user.UserID
                 name = request.form.get('Name')
                 description = request.form.get('Description')
                 phone_number = request.form.get('PhoneNumber')
@@ -600,7 +600,7 @@ def create_app():
 
                 if valid_location:
                     new_restaurant = RestaurantInfo(
-                        UserID=user_id,
+                        UserID=UserID,
                         LocationID=location_id,
                         Name=name,
                         Description=description,
