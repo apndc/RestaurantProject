@@ -271,6 +271,9 @@ def create_app():
                 session.clear()
                 session.permanent = True
                 session['UserID'] = newUser.UserID
+                session['first_name'] = newUser.FirstName
+                session['last_name'] = newUser.LastName
+                session['email'] = newUser.Email
                 
                 # Additional Logging Info
                 logging.info(f"User {newUser.UserID} created successfully.")
@@ -318,6 +321,9 @@ def create_app():
                     session.clear()
                     session.permanent = True
                     session['UserID'] = attempted_user.UserID
+                    session['first_name'] = attempted_user.FirstName
+                    session['last_name'] = attempted_user.LastName
+                    session['email'] = attempted_user.Email
                     
                     # Additional Logging Info
                     logging.info(f"User {attempted_user.Email} logged in successfully.")
@@ -342,17 +348,28 @@ def create_app():
             upcoming = []
             try:
                 upcoming = (
-                    db.query(Reservation).options(joinedload(Reservation.restaurant)).filter(Reservation.UserID == session['UserID'], Reservation.DateTime >= datetime.utcnow())
-                    .order_by(Reservation.DateTime.asc()).limit(5).all()
+                    db.query(Reservation)
+                    .options(joinedload(Reservation.restaurant))
+                    .filter(
+                        Reservation.UserID == session['user_id'],
+                        Reservation.ReservationDate >= datetime.utcnow().date()
+                    )
+                    .order_by(Reservation.ReservationDate.asc(), Reservation.ReservationTime.asc())
+                    .limit(5)
+                    .all()
                 )
             except Exception:
                 upcoming = []
-            
-            return render_template(
-                'user_landing.html', api_key=api_key,
-                user_name = session.get('user_name'), cuisines = cuisine_list, upcoming = upcoming
-            )
 
+            cuisines = ["Italian", "Chinese", "American", "BBQ", "Mexican"]
+
+            return render_template(
+                'user_landing.html',
+                api_key=api_key,
+                user_name=session.get('user_name'),
+                cuisines=cuisines,
+                upcoming=upcoming
+            )
         finally:
             db.close()
 
@@ -396,6 +413,10 @@ def create_app():
             user.Email = request.form['Email'].lower()
             db.commit()
             
+            session['first_name'] = user.FirstName
+            session['last_name'] = user.LastName
+            session['email'] = user.Email
+
             return redirect(url_for('dashboard'))
         
         return render_template('edit_account.html', user=user)
@@ -483,25 +504,50 @@ def create_app():
     @app.route('/reservation', methods=['GET', 'POST'])
     @login_required
     def reservation():
-        if request.method == 'POST':
-            # Access form data
-            name = request.form.get('name')
-            phone = request.form.get('phone')
-            email = request.form.get('email')
-            special = request.form.get('special')
-            card_number = request.form.get('cardNumber')
-            name_on_card = request.form.get('nameOnCard')
-            exp_date = request.form.get('expDate')
-            cvv = request.form.get('cvv')
-            updates = request.form.get('updates')
+        if 'user_id' not in session:
+            return redirect(url_for('login'))
 
-            # Here you can save to a database or process the reservation
-            print(f"Reservation from {name}, phone {phone}, email {email}, special: {special}, updates: {updates}")
+        db = get_session()
 
-            return "Reservation submitted!"  # Or redirect to a confirmation page
+        try:
+            # Required fields from the form
+            user_id = session['user_id']
+            restaurant_id = int(request.form['RID'])
+            date_str = request.form['date']
+            time_str = request.form['time']
+            guests = int(request.form['guests'])
 
-        # GET request: render the reservation page
-        return render_template('bookit-reservepage.html')
+            # Optional fields
+            occasion = request.form.get('event', None)
+            special_requests = request.form.get('accommodations', None)
+
+            # Combine date + time into one datetime object
+            reservation_datetime = datetime.strptime(
+                f"{date_str} {time_str}",
+                "%Y-%m-%d %H:%M"
+            )
+
+            # Create a new reservation object
+            new_reservation = Reservation(
+                UserID=user_id,
+                RID=restaurant_id,
+                NumberOfGuests=guests,
+                ReservationDate=date_str,     
+                ReservationTime=time_str,      
+                SpecialOccasion=occasion,
+                SpecialRequests=special_requests
+            )
+
+            db.add(new_reservation)
+            db.commit()
+            return redirect(url_for('user_landing'))
+
+        except Exception as e:
+            db.rollback()
+            logging.error(f"Reservation error: {e}")
+            return redirect(url_for('error', errors=str(e)))
+        finally:
+            db.close()
 
     # Profile Page
     @app.route('/profile')
