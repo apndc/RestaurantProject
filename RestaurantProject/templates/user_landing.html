@@ -4,28 +4,54 @@
 
  <main>
    <section class="calendar">
-       <h3>Upcoming Reservations</h3>
+    <h3>Upcoming Reservations</h3>
 
+    {% if upcoming and upcoming|length %}
+    <div class="res_list">
+        {% for r in upcoming %}
+            <div class="res_item">
 
-       {% if upcoming and upcoming|length %}
-       <div class="res_list">
-           {% for r in upcoming %}
-               <div class="res_item">
-                   <div class="res_date">
-                       {{r.DateTime.strftime("%a, %b, %d * %I:%M %p") if r.DateTime else "TBD"}}
-                   </div>
-                   <div class="res_destination">
-                       {{r.restaurant.Name if r.restaurant else "Restaurant"}}
-                   </div>
-                   <div class="res_size">
-                       Party: {{r.PartySize if r.PartySize else "N/A"}}
-                   </div>
-               </div>
-               {% endfor %}
-       </div>
-       {% else %}
-           <p style="margin:0.5rem 0;">No upcoming reservations <a href="{{ url_for('restaurant_page') }}">Find a table</a></p>
-   </section>
+                <!-- Date + Time -->
+                <div class="res_date">
+                    {{ r.Date.strftime("%a, %b %d, %Y") }}
+                    at 
+                    {{ r.Date.strftime("%I:%M %p") }}
+                </div>
+
+                <!-- Restaurant Name -->
+                <div class="res_destination">
+                    {{ r.restaurant.Name }}
+                </div>
+
+                <!-- Party Size -->
+                <div class="res_size">
+                    Party Size: {{ r.NumberOfGuests }}
+                </div>
+
+                <!-- Special Event (optional) -->
+                {% if r.SpecialEvent %}
+                <div class="res_event">
+                    Event: {{ r.SpecialEvent }}
+                </div>
+                {% endif %}
+
+                <!-- Special Requests (optional) -->
+                {% if r.SpecialRequests %}
+                <div class="res_requests">
+                    Requests: {{ r.SpecialRequests }}
+                </div>
+                {% endif %}
+
+            </div>
+        {% endfor %}
+    </div>
+
+    {% else %}
+        <p>No upcoming reservations. 
+           <a href="{{ url_for('restaurant_page') }}">Find a table</a>
+        </p>
+    {% endif %}
+</section>
 
 
    <section class="restaurants">
