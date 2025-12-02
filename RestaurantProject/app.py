@@ -349,8 +349,7 @@ def create_app():
                 upcoming = []
             
             return render_template(
-                'user_landing.html', api_key=api_key,
-                user_name = session.get('user_name'), cuisines = cuisine_list, upcoming = upcoming
+                'user_landing.html', api_key=api_key, cuisines = cuisine_list, upcoming = upcoming
             )
 
         finally:
