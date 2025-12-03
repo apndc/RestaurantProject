@@ -42,28 +42,28 @@
                 </div>
             </div>
 
-            <!-- Location (optional, read-only if you prefer) -->
+            <!-- Location (Street, City, State, Zip) -->
             <div class="form-grid two-col">
                 <div>
                     <label for="StreetName">Street:</label>
-                    <input type="text" id="StreetName" value="{{ user.location.StreetName }}" readonly />
+                    <input type="text" id="StreetName" name="StreetName" value="{{ location.StreetName }}" required/>
                 </div>
 
                 <div>
                     <label for="City">City:</label>
-                    <input type="text" id="City" value="{{ user.location.City }}" readonly />
+                    <input type="text" id="City" name="City" value="{{ location.City }}" required/>
                 </div>
             </div>
 
             <div class="form-grid two-col">
                 <div>
                     <label for="State">State:</label>
-                    <input type="text" id="State" value="{{ user.location.State }}" readonly />
+                    <input type="text" id="State" name="State" value="{{ location.State }}" required/>
                 </div>
 
                 <div>
                     <label for="ZipCode">Zip Code:</label>
-                    <input type="text" id="ZipCode" value="{{ user.location.ZipCode }}" readonly />
+                    <input type="text" id="ZipCode" name="ZipCode" value="{{ location.ZipCode }}" pattern="\d{5}" required/>
                 </div>
             </div>
 

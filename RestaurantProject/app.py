@@ -312,7 +312,7 @@ def create_app():
 
                 if attempted_user is None:
                     logging.error("No account found for that email.")
-                    error_msg = "No account found for that email."  # ✅ Set error message
+                    error_msg = "No account found for that email."  # Set error message
 
                 else:
                     stored_hash_hex = attempted_user.Password
@@ -327,7 +327,7 @@ def create_app():
                         logging.info(f"User {attempted_user.Email} logged in successfully.")
                         return redirect(url_for('dashboard'))
                     else:
-                        error_msg = "Invalid Password."  # ✅ Set error message
+                        error_msg = "Invalid Password."  # Set error message
 
                 # If error_msg is set, render login template to trigger modal
                 if error_msg:
@@ -398,17 +398,28 @@ def create_app():
         db = get_session()
         user = db.query(Account).filter_by(UserID=session['UserID']).first()
         
+        # Fetch location object so Pylance knows it exists
+        location = db.query(Location).filter_by(LocationID=user.LocationID).first()
+        
         if request.method == 'POST':
             # update fields from form
             user.FirstName = request.form['FirstName'].strip().upper()
             user.LastName = request.form['LastName'].strip().upper()
             user.PhoneNumber = request.form['PhoneNumber'].replace("-", "")
             user.Email = request.form['Email'].lower()
+            
+            # Update location fields
+            location.StreetName = request.form.get('StreetName', location.StreetName).strip()
+            location.City = request.form.get('City', location.City).strip()
+            location.State = request.form.get('State', location.State).strip()
+            location.ZipCode = request.form.get('ZipCode', location.ZipCode).strip()
+            
             db.commit()
             
             return redirect(url_for('dashboard'))
         
-        return render_template('edit_account.html', user=user)
+        # Include location in template context
+        return render_template('edit_account.html', user=user, location=location)
 
     # General Events Page
     @app.route('/event')
