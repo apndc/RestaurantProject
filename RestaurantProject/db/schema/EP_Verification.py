@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String
-from . import Base
+from db.server import Base
 
 class EP_Verification(Base):
     __tablename__ = 'ep_verification'
