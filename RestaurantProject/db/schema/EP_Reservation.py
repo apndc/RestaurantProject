@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
-from . import Base 
+from db.server import Base 
 
 class EP_Reservation(Base):
     __tablename__ = 'EP_Reservation'
