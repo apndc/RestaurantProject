@@ -1,9 +1,9 @@
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
-from db.server import Base 
+from . import Base 
 
 class EP_Reservation(Base):
-    __tablename__ = 'EP_Reservations'
+    __tablename__ = 'EP_Reservation'
 
     # Primary key
     id = Column(Integer, primary_key=True, autoincrement=True)
