@@ -342,8 +342,8 @@ def create_app():
             upcoming = []
             try:
                 upcoming = (
-                    db.query(Reservation).options(joinedload(Reservation.restaurant)).filter(Reservation.UserID == session['UserID'], Reservation.DateTime >= datetime.utcnow())
-                    .order_by(Reservation.DateTime.asc()).limit(5).all()
+                    db.query(Reservation).options(joinedload(Reservation.restaurant)).filter(Reservation.UserID == session['UserID'], Reservation.Date >= datetime.now())
+                    .order_by(Reservation.Date.asc()).limit(5).all()
                 )
             except Exception:
                 upcoming = []
