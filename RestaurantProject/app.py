@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, url_for, redirect, session, g
+from flask import Flask, render_template, request, url_for, redirect, session, g, flash
 import os, bcrypt, logging, requests
 from sqlalchemy import func
 from sqlalchemy.orm import joinedload
@@ -352,19 +352,110 @@ def create_app():
             upcoming = []
             try:
                 upcoming = (
-                    db.query(Reservation).options(joinedload(Reservation.restaurant)).filter(Reservation.UserID == session['UserID'], Reservation.DateTime >= datetime.utcnow())
-                    .order_by(Reservation.DateTime.asc()).limit(5).all()
+                    db.query(Reservation)
+                    .options(joinedload(Reservation.restaurant))
+                    .filter(
+                        Reservation.UserID == session['UserID'], 
+                        Reservation.DateTime >= datetime.utcnow()
+                    )
+                    .order_by(Reservation.DateTime.asc())
+                    .limit(5)
+                    .all()
                 )
             except Exception:
                 upcoming = []
-            
+
+            # Fetch event planners
+            event_planners = (
+                db.query(Account)
+                .filter(Account.Role == 'EVENT_PLANNER')
+                .all()
+            )
+
             return render_template(
-                'user_landing.html', api_key=api_key,
-                user_name = session.get('user_name'), cuisines = cuisine_list, upcoming = upcoming
+                'user_landing.html',
+                api_key=api_key,
+                user_name=session.get('user_name'),
+                cuisines=cuisine_list,
+                upcoming=upcoming,
+                event_planners=event_planners  # Added For Event Planner reservation
             )
 
         finally:
             db.close()
+            
+    @app.route('/select_event_planner', methods=['POST'])
+    @login_required
+    @customer_required
+    def select_event_planner():
+        db = get_session()
+
+        try:
+            ep_id = request.form.get('ep_id')
+
+            if not ep_id:
+                flash("Invalid Event Planner selection.", "error")
+                return redirect(url_for('user_landing'))
+
+            # Ensure EP exists and is actually an event planner
+            ep = db.query(Account).filter(
+                Account.UserID == ep_id,
+                Account.Role == "EVENT_PLANNER"
+            ).first()
+
+            if not ep:
+                flash("Selected Event Planner not found.", "error")
+                return redirect(url_for('user_landing'))
+
+            # Store selected EP in session so next page can use it
+            session["selected_event_planner_id"] = ep.UserID
+
+            # Redirect user to fill out event form
+            return redirect(url_for('event_form'))
+
+        finally:
+            db.close()
+            
+    @app.route('/create_event', methods=['POST'])
+    @login_required
+    @customer_required
+    def create_event():
+        db = get_session()
+        try:
+            ep_id = request.form['ep_id']
+            first = request.form['FirstName'].strip()
+            last = request.form['LastName'].strip()
+            phone = request.form['PhoneNumber'].strip()
+            event_type = request.form['EventType'].strip()
+            guests = int(request.form.get('Guests', 0))  # safer
+            dt = datetime.fromisoformat(request.form['DateTime'])
+
+            # Create EP Reservation record
+            new_event = EP_Reservation(
+                UserID=session['UserID'],
+                EPID=ep_id,
+                FirstName=first,
+                LastName=last,
+                PhoneNumber=phone,
+                EventType=event_type,
+                Guests=guests,
+                DateTime=dt
+            )
+
+            db.add(new_event)
+            db.commit()
+
+            # Redirect to user landing page after success
+            return redirect(url_for('user_landing'))
+
+        except Exception as e:
+            db.rollback()  # undo any partial changes
+            logging.exception("Failed to create EP event")  # log error
+            return "Error creating event", 500  # or render a template with a message
+
+        finally:
+            db.close()
+
 
     def redirect_dashboard():
 

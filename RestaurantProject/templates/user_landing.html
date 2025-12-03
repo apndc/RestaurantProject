@@ -1,56 +1,156 @@
 {% extends "header.html" %}
-{% block title %}BookIt — Landing Page {% endblock %}
+{% block title %}BookIt — Landing Page{% endblock %}
 {% block content %}
 
- <main>
-   <section class="calendar">
-       <h3>Upcoming Reservations</h3>
+<main>
 
+  <!-- UPCOMING RESERVATIONS -->
+  <section class="calendar">
+    <h3>Upcoming Reservations</h3>
 
-       {% if upcoming and upcoming|length %}
-       <div class="res_list">
-           {% for r in upcoming %}
-               <div class="res_item">
-                   <div class="res_date">
-                       {{r.DateTime.strftime("%a, %b, %d * %I:%M %p") if r.DateTime else "TBD"}}
-                   </div>
-                   <div class="res_destination">
-                       {{r.restaurant.Name if r.restaurant else "Restaurant"}}
-                   </div>
-                   <div class="res_size">
-                       Party: {{r.PartySize if r.PartySize else "N/A"}}
-                   </div>
-               </div>
-               {% endfor %}
-       </div>
-       {% else %}
-           <p style="margin:0.5rem 0;">No upcoming reservations <a href="{{ url_for('restaurant_page') }}">Find a table</a></p>
-   </section>
+    {% if upcoming and upcoming|length %}
+      <div class="res_list">
+        {% for r in upcoming %}
+          <div class="res_item">
+            <div class="res_date">
+              {{ r.DateTime.strftime("%a, %b, %d * %I:%M %p") if r.DateTime else "TBD" }}
+            </div>
 
+            <div class="res_destination">
+              {{ r.restaurant.Name if r.restaurant else "Restaurant" }}
+            </div>
 
-   <section class="restaurants">
-       <h3>Browse by Cuisine</h3>
-       <div class="cuisine_grid">
-           {% for c in cuisines %}
-               <a class="cuisine_card" href="{{url_for('restaurant_page')}}?cuisine={{ c }}">
-                   <div class="cusine_name">{{ c }}</div>
-               </a>
-               {% endfor %}
-       </div>
-   </section>
+            <div class="res_size">
+              Party: {{ r.PartySize if r.PartySize else "N/A" }}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
 
-
-   <section class="venues">
-       <h3>Popular Nearby</h3>
-       <p> Use <em>Browse by Cuisine</em> to filter, or view <a href="{{ url_for('restaurant_page') }}">all</a></p>
+    {% else %}
+      <p style="margin:0.5rem 0;">
+        No upcoming reservations 
+        <a href="{{ url_for('restaurant_page') }}">Find a table</a>
+      </p>
     {% endif %}
-   </section>
-  
- </main>
+  </section>
 
+  <!-- BROWSE BY CUISINE -->
+  <section class="restaurants">
+    <h3>Browse by Cuisine</h3>
+    <div class="cuisine_grid">
+      {% for c in cuisines %}
+        <a class="cuisine_card" href="{{ url_for('restaurant_page') }}?cuisine={{ c }}">
+          <div class="cusine_name">{{ c }}</div>
+        </a>
+      {% endfor %}
+    </div>
+  </section>
 
- <footer>
-   <a href="#">Report a Problem</a>
- </footer>
+  <!-- POPULAR NEARBY -->
+  <section class="venues">
+    <h3>Popular Nearby</h3>
+    <p>Use <em>Browse by Cuisine</em> to filter, or view 
+      <a href="{{ url_for('restaurant_page') }}">all</a></p>
+  </section>
+
+  <!-- EVENT PLANNER BUTTON -->
+  <section class="event-planner">
+    <h3>Need an Event Planner?</h3>
+    <button id="epButton">Would you like to use an Event Planner?</button>
+  </section>
+
+  <!-- EVENT PLANNER MODAL -->
+  <div id="epModal" 
+       style="display:none; position:fixed; inset:0; background: rgba(0,0,0,0.5); 
+              justify-content:center; align-items:center;">
+    <div style="background:#fff; padding:20px; border-radius:10px; max-width:500px; text-align:center;">
+      <h3>Select an Event Planner</h3>
+
+      <ul>
+        {% for ep in event_planners %}
+          <li>
+            {{ ep.FirstName }} {{ ep.LastName }} - {{ ep.PhoneNumber }}
+            <button class="selectEpBtn" data-ep-id="{{ ep.UserID }}">Select</button>
+          </li>
+        {% endfor %}
+      </ul>
+
+      <button id="closeEpModal">Close</button>
+    </div>
+  </div>
+
+  <!-- EVENT FORM MODAL -->
+  <div id="eventFormModal" 
+       style="display:none; position:fixed; inset:0; background: rgba(0,0,0,0.5); 
+              justify-content:center; align-items:center;">
+    <div style="background:#fff; padding:20px; border-radius:10px; max-width:500px; text-align:left;">
+      <h3>Book Your Event</h3>
+      <form method="POST" action="{{ url_for('create_event') }}">
+        <input type="hidden" name="ep_id" id="selectedEpId" value="">
+
+        <label for="FirstName">First Name:</label>
+        <input type="text" name="FirstName" value="{{ g.current_user.FirstName }}" required />
+
+        <label for="LastName">Last Name:</label>
+        <input type="text" name="LastName" value="{{ g.current_user.LastName }}" required />
+
+        <label for="PhoneNumber">Phone Number:</label>
+        <input type="text" name="PhoneNumber" value="{{ g.current_user.PhoneNumber }}" required />
+
+        <label for="EventType">Type of Event:</label>
+        <input type="text" name="EventType" required />
+
+        <label for="Guests">Number of Guests:</label>
+        <input type="number" name="Guests" min="1" required />
+
+        <label for="DateTime">Date and Time:</label>
+        <input type="datetime-local" name="DateTime" required />
+
+        <div style="margin-top: 1rem;">
+          <button type="submit">Submit Event</button>
+          <button type="button" id="closeEventForm">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <a href="#">Report a Problem</a>
+</footer>
+
+<!-- MODAL JAVASCRIPT -->
+<script>
+const epButton = document.getElementById('epButton');
+const epModal = document.getElementById('epModal');
+const closeEpModal = document.getElementById('closeEpModal');
+const selectEpBtns = document.querySelectorAll('.selectEpBtn');
+const eventFormModal = document.getElementById('eventFormModal');
+const selectedEpId = document.getElementById('selectedEpId');
+const closeEventForm = document.getElementById('closeEventForm');
+
+// Open Event Planner modal
+epButton.addEventListener('click', () => epModal.style.display = 'flex');
+
+// Close Event Planner modal
+closeEpModal.addEventListener('click', () => epModal.style.display = 'none');
+
+// When an Event Planner is selected
+selectEpBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    const epId = btn.getAttribute('data-ep-id');
+    selectedEpId.value = epId;
+
+    // Close EP modal and open Event Form modal
+    epModal.style.display = 'none';
+    eventFormModal.style.display = 'flex';
+  });
+});
+
+// Close Event Form modal
+closeEventForm.addEventListener('click', () => eventFormModal.style.display = 'none');
+</script>
 
 {% endblock %}
