@@ -51,8 +51,9 @@ def login_required(f):
 def guest_required(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
+        # If user is logged in, do NOT show the guest page
         if session.get("UserID"):
-            return redirect(url_for("restaurant_page"))
+            return redirect(url_for("dashboard"))
         return f(*args, **kwargs)
     return wrapper
 
@@ -269,8 +270,10 @@ def create_app():
                 
                 # Clear all Cookies and Add Account ID to Session
                 session.clear()
-                session.permanent = True
+                session.permanent = False
                 session['UserID'] = newUser.UserID
+                # session.permanent = True << For testing purposes this is going to be commented out.
+                
                 
                 # Additional Logging Info
                 logging.info(f"User {newUser.UserID} created successfully.")
