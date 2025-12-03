@@ -294,10 +294,12 @@ def create_app():
         
         return redirect(url_for('home'))
 
-    #Login Page
+    # Login Page
     @app.route('/login', methods=["GET", "POST"])
     @guest_required
     def login():
+        error_msg = None  # Initializes error message for incorrect login modal
+
         if request.method == 'POST':
             import codecs
             email = request.form["Email"].lower()
@@ -307,33 +309,38 @@ def create_app():
                 # Get user by email
                 attempted_user = get_one(Account, Email=email)
                 userPw = request.form["Password"].encode('utf-8')
-                
 
                 if attempted_user is None:
                     logging.error("No account found for that email.")
-                    return redirect(url_for('login'))
+                    error_msg = "No account found for that email."  # ✅ Set error message
 
-                stored_hash_hex = attempted_user.Password
-                stored_hash_bytes = codecs.decode(stored_hash_hex.replace("\\x", ""), "hex")
-
-                if bcrypt.checkpw(userPw, stored_hash_bytes):
-                    # Clear all Cookies and Add Account ID to Session
-                    session.clear()
-                    session.permanent = True
-                    session['UserID'] = attempted_user.UserID
-                    
-                    # Additional Logging Info
-                    logging.info(f"User {attempted_user.Email} logged in successfully.")
-                    
-                    return redirect(url_for('dashboard'))
                 else:
-                    return redirect(url_for("home"))
+                    stored_hash_hex = attempted_user.Password
+                    stored_hash_bytes = codecs.decode(stored_hash_hex.replace("\\x", ""), "hex")
+
+                    if bcrypt.checkpw(userPw, stored_hash_bytes):
+                        # Successful login
+                        session.clear()
+                        session.permanent = False  # expires on browser close
+                        session['UserID'] = attempted_user.UserID
+
+                        logging.info(f"User {attempted_user.Email} logged in successfully.")
+                        return redirect(url_for('dashboard'))
+                    else:
+                        error_msg = "Invalid Password."  # ✅ Set error message
+
+                # If error_msg is set, render login template to trigger modal
+                if error_msg:
+                    return render_template('login.html', error_msg=error_msg)
 
             except Exception as e:
                 logging.exception(f"Login error: {e}")
-                return redirect(url_for('login'))
+                error_msg = "An unexpected error occurred."
+                return render_template('login.html', error_msg=error_msg)
 
+        # GET request: show login page
         return render_template('login.html')
+
 
     @app.route('/landing')
     @login_required
