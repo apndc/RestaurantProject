@@ -26,5 +26,6 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 import sphinx_pdj_theme
 html_theme = 'sphinx_pdj_theme'
+html_logo = None
 html_static_path = ['_static']
 html_theme_path = [sphinx_pdj_theme.get_html_theme_path()]
