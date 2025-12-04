@@ -5,7 +5,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>3. Requirements &#8212; BookIt Restaurant Management Application 1.0.0 documentation</title>
+    <title>3. Resources &#8212; BookIt Restaurant Management Application 1.0.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8e8a900e" />
       <link rel="stylesheet" type="text/css" href="_static/css/pdj.css?v=4abe0d83" />
 
@@ -20,7 +20,7 @@
     <script type="module" src="_static/js/dark-mode-toggle.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="5. Troubleshooting" href="troubleshooting.html" />
+    <link rel="next" title="4. Troubleshooting" href="troubleshooting.html" />
     <link rel="prev" title="2. Development" href="development.html" /> 
   </head>  <body class="wy-body-for-nav" role="document"> 
 <div class="menu-overlay"></div>
@@ -49,19 +49,16 @@
 	    </dark-mode-toggle>
 	  </div>
 	  <div role="main">
-  <section id="requirements">
-<span id="resources"></span><h1><span class="section-number">3. </span>Requirements<a class="headerlink" href="#requirements" title="Link to this heading">¶</a></h1>
-</section>
-<section id="id1">
-<h1><span class="section-number">4. </span>Resources<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h1>
+  <section id="resources">
+<span id="id1"></span><h1><span class="section-number">3. </span>Resources<a class="headerlink" href="#resources" title="Link to this heading">¶</a></h1>
 <p>This section describes modules, classes, and functions private to the BookIt application.
 It is intended to document how the application works internally.</p>
 <section id="app-py">
-<h2><span class="section-number">4.1. </span>app.py<a class="headerlink" href="#app-py" title="Link to this heading">¶</a></h2>
+<h2><span class="section-number">3.1. </span>app.py<a class="headerlink" href="#app-py" title="Link to this heading">¶</a></h2>
 <p>Initializes Flask app, configures routes, manages app decorators, and handles user sessions and cookies.</p>
 </section>
 <section id="db-schema">
-<h2><span class="section-number">4.2. </span>db.schema<a class="headerlink" href="#db-schema" title="Link to this heading">¶</a></h2>
+<h2><span class="section-number">3.2. </span>db.schema<a class="headerlink" href="#db-schema" title="Link to this heading">¶</a></h2>
 <p>Contains SQLAlchemy ORM models:</p>
 <ul class="simple">
 <li><p>Account</p></li>
@@ -78,7 +75,7 @@ It is intended to document how the application works internally.</p>
 <p>Defines database table structure and relationships used throughout the application.</p>
 </section>
 <section id="db-query">
-<h2><span class="section-number">4.3. </span>db.query<a class="headerlink" href="#db-query" title="Link to this heading">¶</a></h2>
+<h2><span class="section-number">3.3. </span>db.query<a class="headerlink" href="#db-query" title="Link to this heading">¶</a></h2>
 <p>Creates the database engine and session factory. Provides:</p>
 <ul class="simple">
 <li><p>insert(): inserts and commits records to the database</p></li>
@@ -88,31 +85,31 @@ It is intended to document how the application works internally.</p>
 </ul>
 </section>
 <section id="db-server">
-<h2><span class="section-number">4.4. </span>db.server<a class="headerlink" href="#db-server" title="Link to this heading">¶</a></h2>
+<h2><span class="section-number">3.4. </span>db.server<a class="headerlink" href="#db-server" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p>get_session(): returns a single SQLAlchemy session</p></li>
 <li><p>init_database(): Initialize database tables</p></li>
 </ul>
 </section>
 <section id="templates">
-<h2><span class="section-number">4.5. </span>templates/<a class="headerlink" href="#templates" title="Link to this heading">¶</a></h2>
+<h2><span class="section-number">3.5. </span>templates/<a class="headerlink" href="#templates" title="Link to this heading">¶</a></h2>
 <p>Jinja2 templates and other HTML files used to render web pages for the application.</p>
 </section>
 <section id="static">
-<h2><span class="section-number">4.6. </span>static/<a class="headerlink" href="#static" title="Link to this heading">¶</a></h2>
+<h2><span class="section-number">3.6. </span>static/<a class="headerlink" href="#static" title="Link to this heading">¶</a></h2>
 <p>Static files including CSS, JS Scripts, and other Assets used in the application.</p>
 </section>
 <section id="docs">
-<h2><span class="section-number">4.7. </span>docs/<a class="headerlink" href="#docs" title="Link to this heading">¶</a></h2>
+<h2><span class="section-number">3.7. </span>docs/<a class="headerlink" href="#docs" title="Link to this heading">¶</a></h2>
 <p>Documentation files for the project including Sphinx configuration and reStructuredText files.</p>
 </section>
 <section id="logs">
-<h2><span class="section-number">4.8. </span>logs/<a class="headerlink" href="#logs" title="Link to this heading">¶</a></h2>
+<h2><span class="section-number">3.8. </span>logs/<a class="headerlink" href="#logs" title="Link to this heading">¶</a></h2>
 <p>Application log files for debugging and monitoring.
 (Not included in Git versions but is created on App launch)</p>
 </section>
 <section id="tests">
-<h2><span class="section-number">4.9. </span>tests/<a class="headerlink" href="#tests" title="Link to this heading">¶</a></h2>
+<h2><span class="section-number">3.9. </span>tests/<a class="headerlink" href="#tests" title="Link to this heading">¶</a></h2>
 <p>Unit tests written with pytest.
 Covers:</p>
 <ul class="simple">
@@ -133,7 +130,7 @@ Covers:</p>
   
   <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
     
-    <a href="troubleshooting.html" class="btn btn-neutral float-right" title="5. Troubleshooting">Next <span class="fa fa-arrow-circle-right"></span></a>
+    <a href="troubleshooting.html" class="btn btn-neutral float-right" title="4. Troubleshooting">Next <span class="fa fa-arrow-circle-right"></span></a>
     
     
     <a href="development.html" class="btn btn-neutral" title="2. Development"><span class="fa fa-arrow-circle-left"></span>Previous</a>
@@ -195,23 +192,22 @@ Covers:</p>
 <li class="toctree-l2"><a class="reference internal" href="development.html#build-documentation">2.5. Build Documentation</a></li>
 </ul>
 </li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">3. Requirements</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#id1">4. Resources</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#app-py">4.1. app.py</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#db-schema">4.2. db.schema</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#db-query">4.3. db.query</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#db-server">4.4. db.server</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#templates">4.5. templates/</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#static">4.6. static/</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#docs">4.7. docs/</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#logs">4.8. logs/</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#tests">4.9. tests/</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">3. Resources</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#app-py">3.1. app.py</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#db-schema">3.2. db.schema</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#db-query">3.3. db.query</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#db-server">3.4. db.server</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#templates">3.5. templates/</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#static">3.6. static/</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#docs">3.7. docs/</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#logs">3.8. logs/</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#tests">3.9. tests/</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="troubleshooting.html">5. Troubleshooting</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="troubleshooting.html#issue-1">5.1. Issue #1</a></li>
-<li class="toctree-l2"><a class="reference internal" href="troubleshooting.html#issue-2">5.2. Issue #2</a></li>
-<li class="toctree-l2"><a class="reference internal" href="troubleshooting.html#issue-3">5.3. Issue #3</a></li>
+<li class="toctree-l1"><a class="reference internal" href="troubleshooting.html">4. Troubleshooting</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="troubleshooting.html#issue-1">4.1. Issue #1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="troubleshooting.html#issue-2">4.2. Issue #2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="troubleshooting.html#issue-3">4.3. Issue #3</a></li>
 </ul>
 </li>
 </ul>
@@ -223,17 +219,16 @@ Covers:</p>
   <div>
     <h3><a href="index.html">Table of Contents</a></h3>
     <ul>
-<li><a class="reference internal" href="#">3. Requirements</a></li>
-<li><a class="reference internal" href="#id1">4. Resources</a><ul>
-<li><a class="reference internal" href="#app-py">4.1. app.py</a></li>
-<li><a class="reference internal" href="#db-schema">4.2. db.schema</a></li>
-<li><a class="reference internal" href="#db-query">4.3. db.query</a></li>
-<li><a class="reference internal" href="#db-server">4.4. db.server</a></li>
-<li><a class="reference internal" href="#templates">4.5. templates/</a></li>
-<li><a class="reference internal" href="#static">4.6. static/</a></li>
-<li><a class="reference internal" href="#docs">4.7. docs/</a></li>
-<li><a class="reference internal" href="#logs">4.8. logs/</a></li>
-<li><a class="reference internal" href="#tests">4.9. tests/</a></li>
+<li><a class="reference internal" href="#">3. Resources</a><ul>
+<li><a class="reference internal" href="#app-py">3.1. app.py</a></li>
+<li><a class="reference internal" href="#db-schema">3.2. db.schema</a></li>
+<li><a class="reference internal" href="#db-query">3.3. db.query</a></li>
+<li><a class="reference internal" href="#db-server">3.4. db.server</a></li>
+<li><a class="reference internal" href="#templates">3.5. templates/</a></li>
+<li><a class="reference internal" href="#static">3.6. static/</a></li>
+<li><a class="reference internal" href="#docs">3.7. docs/</a></li>
+<li><a class="reference internal" href="#logs">3.8. logs/</a></li>
+<li><a class="reference internal" href="#tests">3.9. tests/</a></li>
 </ul>
 </li>
 </ul>
@@ -249,7 +244,7 @@ Covers:</p>
   <div>
     <h4>Next topic</h4>
     <p class="topless"><a href="troubleshooting.html"
-                          title="next chapter"><span class="section-number">5. </span>Troubleshooting</a></p>
+                          title="next chapter"><span class="section-number">4. </span>Troubleshooting</a></p>
   </div>
   
   
