@@ -391,6 +391,8 @@ def create_app():
                 upcoming_ep = []
                 
             # Combine and sort both by Date and Time
+            all_upcoming = upcoming + upcoming_ep
+            
             all_upcoming = sorted(
                 upcoming + upcoming_ep,
                 key=lambda x: x.DateTime
