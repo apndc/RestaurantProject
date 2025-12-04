@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, url_for, redirect, session, g
+from flask import Flask, render_template, request, url_for, redirect, session, g, flash
 import os, bcrypt, logging, requests
 from sqlalchemy import func, asc
 from sqlalchemy.orm import joinedload
@@ -51,6 +51,7 @@ def login_required(f):
 def guest_required(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
+        # If user is logged in, do NOT show the guest page
         if session.get("UserID"):
             return redirect(url_for("dashboard"))
         return f(*args, **kwargs)
@@ -181,22 +182,19 @@ def create_app():
         error = None
 
         if request.method == 'POST':
-            # Make A Location
-            
             PGsession = get_session()
-            
             location_data: dict = {}
 
+            # Collect location info
             for key, value in request.form.items():
                 if key in ('StreetName', 'City', 'State', 'ZipCode'):
                     location_data[key] = value.strip()
 
             newLocation = Location(**location_data)
-
             valid_location = False
-
             is_valid = False
 
+            # Insert Location
             try:
                 PGsession.add(newLocation)
                 PGsession.flush()
@@ -204,80 +202,93 @@ def create_app():
                 PGsession.commit()
                 valid_location = True
             except Exception as e:
-                    logging.error(f"An error has occurred: {e}")
-                    return render_template("createaccount.html", error=error)
+                logging.error(f"Location error: {e}")
+                return render_template("createaccount.html", error="Error saving location.")
             finally:
                 PGsession.close()
-            # Make A User
-            FirstName=request.form["FirstName"].strip().upper()
-            LastName=request.form["LastName"].strip().upper()
-            PhoneNumber=request.form["PhoneNumber"].strip()
+
+            # User info
+            FirstName = request.form["FirstName"].strip().upper()
+            LastName = request.form["LastName"].strip().upper()
+            PhoneNumber = request.form["PhoneNumber"].strip()
             role = request.form.get("Role", "CUSTOMER").upper()
 
+            # Basic validation
             if FirstName.isalpha() and LastName.isalpha() and PhoneNumber.isnumeric() and len(PhoneNumber) == 10:
-                logging.info(f"Inputs {FirstName}, {LastName}, and {PhoneNumber} are valid.")
                 is_valid = True
-            elif not FirstName.isalpha():
-                logging.info(f"Input: {FirstName} is Invalid")
-                error = 'First name can only contain letters'
-            elif not LastName.isalpha():
-                error = 'Last name can only contain letters'
-            elif not PhoneNumber.isnumeric() or not len(PhoneNumber) == 10:
-                error = 'Phone number must be exactly 10 digits'
-            if is_valid and valid_location:
+            else:
+                if not FirstName.isalpha():
+                    error = 'First name can only contain letters'
+                elif not LastName.isalpha():
+                    error = 'Last name can only contain letters'
+                elif not PhoneNumber.isnumeric() or len(PhoneNumber) != 10:
+                    error = 'Phone number must be exactly 10 digits'
 
-                user_data: dict = {}
+            if not (is_valid and valid_location):
+                return render_template('createaccount.html', error=error)
 
-                user_data['LocationID'] = location_id
+            # Collect user data
+            user_data: dict = {'LocationID': location_id}
+            for key, value in request.form.items():
+                if key in ('FirstName', 'LastName', 'Role'):
+                    user_data[key] = value.strip().upper()
+                elif key == 'Email':
+                    try:
+                        v = validate_email(value)
+                        user_data[key] = v.normalized
+                    except EmailNotValidError:
+                        return render_template('createaccount.html', error='Invalid email format')
+                elif key == 'PhoneNumber':
+                    user_data[key] = value.strip().replace("-", "")
+                elif key == 'Password':
+                    user_data[key] = value.strip()
 
-                for key, value in request.form.items():
-                    if key in ('FirstName', 'LastName', 'Role'):
-                        user_data[key] = value.strip().upper()
-                    elif key == 'Email':
-                        try:
-                            v = validate_email(value) 
-                            user_data[key] = v.normalized           
-                        except:
-                            error = 'Emails have to be formatted properly'
-                    elif key == 'PhoneNumber':
-                        user_data[key] = value.strip().replace("-", "")
-                    elif key == 'Password':
-                        user_data[key] = value.strip()
-                
-                user_data['Role'] = user_data.get('Role', 'CUSTOMER')
+            user_data['Role'] = user_data.get('Role', 'CUSTOMER')
 
-                # converting password to array of bytes
-                bytes = user_data['Password'].encode('utf-8')
+            # Password hashing
+            password_bytes = user_data['Password'].encode('utf-8')
+            salt = bcrypt.gensalt()
+            user_data['Password'] = bcrypt.hashpw(password_bytes, salt)
 
-                # generating the salt
-                salt = bcrypt.gensalt()
+            # --- Verification Checks ---
+            if role == "EVENT_PLANNER":
+                code_entered = request.form.get("verification_code", "").strip().upper()
+                ep_row = get_one(EP_Verification, verification_code=code_entered)
+                if not ep_row:
+                    return render_template("createaccount.html", error="Invalid Event Planner verification code")
 
-                # Hashing the password
-                user_data['Password'] = bcrypt.hashpw(bytes, salt)
+            elif role == "RESTAURANT_OWNER":
+                code_entered = request.form.get("verification_code", "").strip().upper()
+                ro_row = get_one(RO_Verification, verification_code=code_entered)
+                if not ro_row:
+                    return render_template("createaccount.html", error="Invalid Restaurant Owner verification code")
 
-                try:
-                    if not get_one(Account, Email=user_data['Email']):
-                        newUser = insert(Account(**user_data))
-                    else:
-                        return render_template("createaccount.html", error="Already An Account With This Email")
-                except Exception as e:
-                    logging.error(f"An error has occurred: {e}")
-                    return render_template("createaccount.html", error=error)
-                
-                # Clear all Cookies and Add Account ID to Session
-                session.clear()
-                session.permanent = False
-                # session.permanent = True
-                session['UserID'] = newUser.UserID
-                
-                # Additional Logging Info
-                logging.info(f"User {newUser.UserID} created successfully.")
-                
-                role = (newUser.Role or "CUSTOMER").strip().upper()
+            # Insert user into Account
+            try:
+                if not get_one(Account, Email=user_data['Email']):
+                    newUser = insert(Account(**user_data))
+                else:
+                    return render_template("createaccount.html", error="Already an account with this email")
+            except Exception as e:
+                logging.error(f"Account insertion error: {e}")
+                return render_template("createaccount.html", error="Error creating account")
 
+            # Setup session
+            session.clear()
+            session.permanent = False
+            session['UserID'] = newUser.UserID
+            logging.info(f"User {newUser.UserID} ({newUser.Role}) created successfully.")
+
+            # Redirect based on role
+            if newUser.Role == "EVENT_PLANNER":
+                return redirect(url_for('eventpage'))
+            elif newUser.Role == "RESTAURANT_OWNER":
+                return redirect(url_for('owner_landing'))
+            else:
                 return redirect(url_for('dashboard'))
 
         return render_template('createaccount.html', error=error)
+
 
     # Delete current logged-in user
     @app.route('/delete', methods=['GET','POST'])
@@ -289,10 +300,12 @@ def create_app():
         
         return redirect(url_for('home'))
 
-    #Login Page
+    # Login Page
     @app.route('/login', methods=["GET", "POST"])
     @guest_required
     def login():
+        error_msg = None  # Initializes error message for incorrect login modal
+
         if request.method == 'POST':
             import codecs
             email = request.form["Email"].lower()
@@ -302,33 +315,38 @@ def create_app():
                 # Get user by email
                 attempted_user = get_one(Account, Email=email)
                 userPw = request.form["Password"].encode('utf-8')
-                
 
                 if attempted_user is None:
                     logging.error("No account found for that email.")
-                    return redirect(url_for('login'))
+                    error_msg = "No account found for that email."  # Set error message
 
-                stored_hash_hex = attempted_user.Password
-                stored_hash_bytes = codecs.decode(stored_hash_hex.replace("\\x", ""), "hex")
-
-                if bcrypt.checkpw(userPw, stored_hash_bytes):
-                    # Clear all Cookies and Add Account ID to Session
-                    session.clear()
-                    session.permanent = True
-                    session['UserID'] = attempted_user.UserID
-                    
-                    # Additional Logging Info
-                    logging.info(f"User {attempted_user.Email} logged in successfully.")
-                    
-                    return redirect(url_for('dashboard'))
                 else:
-                    return redirect(url_for("home"))
+                    stored_hash_hex = attempted_user.Password
+                    stored_hash_bytes = codecs.decode(stored_hash_hex.replace("\\x", ""), "hex")
+
+                    if bcrypt.checkpw(userPw, stored_hash_bytes):
+                        # Successful login
+                        session.clear()
+                        session.permanent = False  # expires on browser close
+                        session['UserID'] = attempted_user.UserID
+
+                        logging.info(f"User {attempted_user.Email} logged in successfully.")
+                        return redirect(url_for('dashboard'))
+                    else:
+                        error_msg = "Invalid Password."  # Set error message
+
+                # If error_msg is set, render login template to trigger modal
+                if error_msg:
+                    return render_template('login.html', error_msg=error_msg)
 
             except Exception as e:
                 logging.exception(f"Login error: {e}")
-                return redirect(url_for('login'))
+                error_msg = "An unexpected error occurred."
+                return render_template('login.html', error_msg=error_msg)
 
+        # GET request: show login page
         return render_template('login.html')
+
 
     @app.route('/landing')
     @login_required
@@ -339,16 +357,149 @@ def create_app():
 
         db = get_session()
 
-        upcoming = (
-            db.query(Reservation)
-            .filter(Reservation.UserID == session["UserID"])
-            .order_by(
-                asc(getattr(Reservation, "ReservationDate"))
+        try: 
+            upcoming = []
+            upcoming_ep = []
+            try:
+                # Restaurant Reservations
+                upcoming = (
+                    db.query(Reservation)
+                    .options(joinedload(Reservation.restaurant))
+                    .filter(
+                        Reservation.UserID == session['UserID'], 
+                        Reservation.DateTime >= datetime.utcnow()
+                    )
+                    .order_by(Reservation.DateTime.asc())
+                    .limit(5)
+                    .all()
+                )
+                
+                # Event Planner Reservations
+                upcoming_ep = (
+                    db.query(EP_Reservation)
+                    .filter(
+                        EP_Reservation.UserID == session['UserID'],
+                        EP_Reservation.DateTime >= datetime.utcnow()
+                    )
+                    .order_by(EP_Reservation.DateTime.asc())
+                    .limit(5)
+                    .all()
+                )
+
+            except Exception:
+                upcoming = []
+                upcoming_ep = []
+                
+            # Combine and sort both by Date and Time
+            all_upcoming = upcoming + upcoming_ep
+            
+            all_upcoming = sorted(
+                upcoming + upcoming_ep,
+                key=lambda x: x.DateTime
+            )
+            
+            all_upcoming = all_upcoming[:5] # <--- limit of 5 for beginning purposes
+
+            # Fetch event planners
+            event_planners = (
+                db.query(Account)
+                .filter(Account.Role == 'EVENT_PLANNER')
+                .all()
+            )
+
+            return render_template(
+                'user_landing.html',
+                api_key=api_key,
+                user_name=session.get('user_name'),
+                cuisines=cuisine_list,
+                upcoming=upcoming,
+                event_planners=event_planners  # Added For Event Planner reservation
             )
             .all()
         )
 
-        return render_template("user_landing.html", upcoming=upcoming)
+        finally:
+            db.close()
+            
+    @app.route('/select_event_planner', methods=['POST'])
+    @login_required
+    @customer_required
+    def select_event_planner():
+        db = get_session()
+
+        try:
+            ep_id = request.form.get('ep_id')
+
+            if not ep_id:
+                flash("Invalid Event Planner selection.", "error")
+                return redirect(url_for('user_landing'))
+
+            # Ensure EP exists and is actually an event planner
+            ep = db.query(Account).filter(
+                Account.UserID == ep_id,
+                Account.Role == "EVENT_PLANNER"
+            ).first()
+
+            if not ep:
+                flash("Selected Event Planner not found.", "error")
+                return redirect(url_for('user_landing'))
+
+            # Store selected EP in session so next page can use it
+            session["selected_event_planner_id"] = ep.UserID
+
+            # Redirect user to fill out event form
+            return redirect(url_for('event_form'))
+
+        finally:
+            db.close()
+            
+    @app.route('/create_event', methods=['POST'])
+    @login_required
+    @customer_required
+    def create_event():
+        db = get_session()
+        try:
+            ep_id = request.form['ep_id']
+            first = request.form['FirstName'].strip()
+            last = request.form['LastName'].strip()
+            phone = request.form['PhoneNumber'].strip()
+            event_type = request.form['EventType'].strip()
+            guests = int(request.form.get('Guests', 0))  # safer
+            dt = datetime.fromisoformat(request.form['DateTime'])
+
+            # Create EP Reservation record
+            new_event = EP_Reservation(
+                UserID=session['UserID'],
+                EPID=ep_id,
+                FirstName=first,
+                LastName=last,
+                PhoneNumber=phone,
+                EventType=event_type,
+                Guests=guests,
+                DateTime=dt
+            )
+
+            db.add(new_event)
+            db.commit()
+            
+            # Fetch the Event Planner's name
+            ep_user = db.query(Account).filter_by(UserID=ep_id).first()
+            ep_name = f"{ep_user.FirstName} {ep_user.LastName}" if ep_user else "your Event Planner"
+
+            # Flash personalized success message
+            flash(f"Event with {ep_name} scheduled successfully!", "success")
+
+            # Redirect to user landing page after success
+            return redirect(url_for('user_landing'))
+
+        except Exception as e:
+            db.rollback()  # undo any partial changes
+            logging.exception("Failed to create EP event")  # log error
+            return "Error creating event", 500  
+
+        finally:
+            db.close()
+
 
     def redirect_dashboard():
 
@@ -382,25 +533,55 @@ def create_app():
         db = get_session()
         user = db.query(Account).filter_by(UserID=session['UserID']).first()
         
+        # Fetch location object so Pylance knows it exists
+        location = db.query(Location).filter_by(LocationID=user.LocationID).first()
+        
         if request.method == 'POST':
             # update fields from form
             user.FirstName = request.form['FirstName'].strip().upper()
             user.LastName = request.form['LastName'].strip().upper()
             user.PhoneNumber = request.form['PhoneNumber'].replace("-", "")
             user.Email = request.form['Email'].lower()
+            
+            # Update location fields
+            location.StreetName = request.form.get('StreetName', location.StreetName).strip()
+            location.City = request.form.get('City', location.City).strip()
+            location.State = request.form.get('State', location.State).strip()
+            location.ZipCode = request.form.get('ZipCode', location.ZipCode).strip()
+            
             db.commit()
             
             return redirect(url_for('dashboard'))
         
-        return render_template('edit_account.html', user=user)
+        # Include location in template context
+        return render_template('edit_account.html', user=user, location=location)
 
-    # General Events Page
+    # General Event Planner Dashboard
     @app.route('/event')
     @login_required
-    @event_required
+    @event_required  # or @event_planner_required if you have a decorator
     def eventpage():
-        
-        return render_template('bookit-eventpage.html', api_key=api_key)
+        db = get_session()
+        try:
+            # Fetch all upcoming customers assigned to this EP
+            customers = (
+                db.query(EP_Reservation)
+                .filter(
+                    EP_Reservation.EPID == session['UserID'],
+                    EP_Reservation.DateTime >= datetime.utcnow()
+                )
+                .order_by(EP_Reservation.DateTime.asc())
+                .all()
+            )
+
+            return render_template(
+                'bookit-eventpage.html',
+                api_key=api_key,
+                customers=customers
+            )
+        finally:
+            db.close()
+
 
     # Event Page
     @app.route('/event/<int:event_id>')

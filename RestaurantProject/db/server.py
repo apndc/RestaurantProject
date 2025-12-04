@@ -35,7 +35,7 @@ def init_database():
     """Initialize database tables"""
     try:
         # import all of the tables
-        from db.schema import Account, CardInfo, Events, Location, Reservation, RestaurantInfo
+        from db.schema import Account, CardInfo, Events, Location, Reservation, RestaurantInfo, EP_Reservation, EP_Verification, RO_Verification
         
         # create all of the tables
         Base.metadata.create_all(bind=engine)

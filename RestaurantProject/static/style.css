@@ -57,10 +57,12 @@ h3 {
 
 main {
     display: flex;
-    justify-content: center;
-    align-items: center;
+    flex-direction: column;
+    /*justify-content: center; Creating format issues on landing page
+    align-items: center;*/
     width: 100%;
     padding: 2rem;
+    flex: 1;
 }
 
 main.dashboard {

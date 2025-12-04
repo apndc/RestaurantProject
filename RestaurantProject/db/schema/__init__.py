@@ -12,6 +12,7 @@ from .RestaurantInfo import RestaurantInfo
 from .Menu import Menu
 from .EP_Verification import EP_Verification
 from .RO_Verification import RO_Verification
+from .EP_Reservation import EP_Reservation
 
 # make tables (models) available when importing from schema package
-__all__ = ['Account', 'CardInfo', 'Events', 'Location', 'Reservation', 'RestaurantInfo', 'Menu', 'EP_Verification', 'RO_Verification']
+__all__ = ['Account', 'CardInfo', 'Events', 'Location', 'Reservation', 'RestaurantInfo', 'Menu', 'EP_Verification', 'RO_Verification', 'EP_Reservation']
