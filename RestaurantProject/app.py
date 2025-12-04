@@ -185,22 +185,19 @@ def create_app():
         error = None
 
         if request.method == 'POST':
-            # Make A Location
-            
             PGsession = get_session()
-            
             location_data: dict = {}
 
+            # Collect location info
             for key, value in request.form.items():
                 if key in ('StreetName', 'City', 'State', 'ZipCode'):
                     location_data[key] = value.strip()
 
             newLocation = Location(**location_data)
-
             valid_location = False
-
             is_valid = False
 
+            # Insert Location
             try:
                 PGsession.add(newLocation)
                 PGsession.flush()
@@ -208,81 +205,93 @@ def create_app():
                 PGsession.commit()
                 valid_location = True
             except Exception as e:
-                    logging.error(f"An error has occurred: {e}")
-                    return render_template("createaccount.html", error=error)
+                logging.error(f"Location error: {e}")
+                return render_template("createaccount.html", error="Error saving location.")
             finally:
                 PGsession.close()
-            # Make A User
-            FirstName=request.form["FirstName"].strip().upper()
-            LastName=request.form["LastName"].strip().upper()
-            PhoneNumber=request.form["PhoneNumber"].strip()
+
+            # User info
+            FirstName = request.form["FirstName"].strip().upper()
+            LastName = request.form["LastName"].strip().upper()
+            PhoneNumber = request.form["PhoneNumber"].strip()
             role = request.form.get("Role", "CUSTOMER").upper()
 
+            # Basic validation
             if FirstName.isalpha() and LastName.isalpha() and PhoneNumber.isnumeric() and len(PhoneNumber) == 10:
-                logging.info(f"Inputs {FirstName}, {LastName}, and {PhoneNumber} are valid.")
                 is_valid = True
-            elif not FirstName.isalpha():
-                logging.info(f"Input: {FirstName} is Invalid")
-                error = 'First name can only contain letters'
-            elif not LastName.isalpha():
-                error = 'Last name can only contain letters'
-            elif not PhoneNumber.isnumeric() or not len(PhoneNumber) == 10:
-                error = 'Phone number must be exactly 10 digits'
-            if is_valid and valid_location:
+            else:
+                if not FirstName.isalpha():
+                    error = 'First name can only contain letters'
+                elif not LastName.isalpha():
+                    error = 'Last name can only contain letters'
+                elif not PhoneNumber.isnumeric() or len(PhoneNumber) != 10:
+                    error = 'Phone number must be exactly 10 digits'
 
-                user_data: dict = {}
+            if not (is_valid and valid_location):
+                return render_template('createaccount.html', error=error)
 
-                user_data['LocationID'] = location_id
+            # Collect user data
+            user_data: dict = {'LocationID': location_id}
+            for key, value in request.form.items():
+                if key in ('FirstName', 'LastName', 'Role'):
+                    user_data[key] = value.strip().upper()
+                elif key == 'Email':
+                    try:
+                        v = validate_email(value)
+                        user_data[key] = v.normalized
+                    except EmailNotValidError:
+                        return render_template('createaccount.html', error='Invalid email format')
+                elif key == 'PhoneNumber':
+                    user_data[key] = value.strip().replace("-", "")
+                elif key == 'Password':
+                    user_data[key] = value.strip()
 
-                for key, value in request.form.items():
-                    if key in ('FirstName', 'LastName', 'Role'):
-                        user_data[key] = value.strip().upper()
-                    elif key == 'Email':
-                        try:
-                            v = validate_email(value) 
-                            user_data[key] = v.normalized           
-                        except:
-                            error = 'Emails have to be formatted properly'
-                    elif key == 'PhoneNumber':
-                        user_data[key] = value.strip().replace("-", "")
-                    elif key == 'Password':
-                        user_data[key] = value.strip()
-                
-                user_data['Role'] = user_data.get('Role', 'CUSTOMER')
+            user_data['Role'] = user_data.get('Role', 'CUSTOMER')
 
-                # converting password to array of bytes
-                bytes = user_data['Password'].encode('utf-8')
+            # Password hashing
+            password_bytes = user_data['Password'].encode('utf-8')
+            salt = bcrypt.gensalt()
+            user_data['Password'] = bcrypt.hashpw(password_bytes, salt)
 
-                # generating the salt
-                salt = bcrypt.gensalt()
+            # --- Verification Checks ---
+            if role == "EVENT_PLANNER":
+                code_entered = request.form.get("verification_code", "").strip()
+                ep_row = get_one(EP_Verification, verification_code=code_entered)
+                if not ep_row:
+                    return render_template("createaccount.html", error="Invalid Event Planner verification code")
 
-                # Hashing the password
-                user_data['Password'] = bcrypt.hashpw(bytes, salt)
+            elif role == "RESTAURANT_OWNER":
+                code_entered = request.form.get("verification_code", "").strip()
+                ro_row = get_one(RO_Verification, verification_code=code_entered)
+                if not ro_row:
+                    return render_template("createaccount.html", error="Invalid Restaurant Owner verification code")
 
-                try:
-                    if not get_one(Account, Email=user_data['Email']):
-                        newUser = insert(Account(**user_data))
-                    else:
-                        return render_template("createaccount.html", error="Already An Account With This Email")
-                except Exception as e:
-                    logging.error(f"An error has occurred: {e}")
-                    return render_template("createaccount.html", error=error)
-                
-                # Clear all Cookies and Add Account ID to Session
-                session.clear()
-                session.permanent = False
-                session['UserID'] = newUser.UserID
-                # session.permanent = True << For testing purposes this is going to be commented out.
-                
-                
-                # Additional Logging Info
-                logging.info(f"User {newUser.UserID} created successfully.")
-                
-                role = (newUser.Role or "CUSTOMER").strip().upper()
+            # Insert user into Account
+            try:
+                if not get_one(Account, Email=user_data['Email']):
+                    newUser = insert(Account(**user_data))
+                else:
+                    return render_template("createaccount.html", error="Already an account with this email")
+            except Exception as e:
+                logging.error(f"Account insertion error: {e}")
+                return render_template("createaccount.html", error="Error creating account")
 
+            # Setup session
+            session.clear()
+            session.permanent = False
+            session['UserID'] = newUser.UserID
+            logging.info(f"User {newUser.UserID} ({newUser.Role}) created successfully.")
+
+            # Redirect based on role
+            if newUser.Role == "EVENT_PLANNER":
+                return redirect(url_for('eventpage'))
+            elif newUser.Role == "RESTAURANT_OWNER":
+                return redirect(url_for('owner_landing'))
+            else:
                 return redirect(url_for('dashboard'))
 
         return render_template('createaccount.html', error=error)
+
 
     # Delete current logged-in user
     @app.route('/delete')
