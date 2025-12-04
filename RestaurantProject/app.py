@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, url_for, redirect, session, g
 import os, bcrypt, logging, requests
-from sqlalchemy import func
+from sqlalchemy import func, asc
 from sqlalchemy.orm import joinedload
 from dotenv import load_dotenv
 from db.server import get_session
@@ -52,7 +52,7 @@ def guest_required(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
         if session.get("UserID"):
-            return redirect(url_for("restaurant_page"))
+            return redirect(url_for("dashboard"))
         return f(*args, **kwargs)
     return wrapper
 
@@ -266,7 +266,8 @@ def create_app():
                 
                 # Clear all Cookies and Add Account ID to Session
                 session.clear()
-                session.permanent = True
+                session.permanent = False
+                # session.permanent = True
                 session['UserID'] = newUser.UserID
                 
                 # Additional Logging Info
@@ -341,11 +342,13 @@ def create_app():
         upcoming = (
             db.query(Reservation)
             .filter(Reservation.UserID == session["UserID"])
-            .order_by(Reservation.Date.asc())
+            .order_by(
+                asc(getattr(Reservation, "ReservationDate"))
+            )
             .all()
         )
 
-        return render_template("landing.html", upcoming=upcoming)
+        return render_template("user_landing.html", upcoming=upcoming)
 
     def redirect_dashboard():
 
@@ -361,7 +364,7 @@ def create_app():
         elif role == 'restaurant_owner':
             return redirect(url_for('owner_landing'))
         else:
-            return redirect(url_for('user_landing'))
+            return redirect(url_for('landing'))
 
             
     # logout function for username on landing page
@@ -482,10 +485,10 @@ def create_app():
         new_reservation = Reservation(
             UserID=session["UserID"],           # ← YES, saved here
             RID=request.form["RID"],
-            Date=request.form["date"],
-            Time=request.form["time"],
+            ReservationDate=request.form["date"],
+            ReservationTime=request.form["time"],
             NumberOfGuests=request.form["guests"],
-            SpecialEvent=request.form.get("event"),
+            SpecialOccasion=request.form.get("event"),
             SpecialRequests=request.form.get("accommodations")
         )
 
