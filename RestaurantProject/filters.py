@@ -13,3 +13,7 @@ def register_filters(app):
     @app.template_filter('dollars')
     def dollars(value):
         return f"${value:,.2f}"
+    
+    @app.template_filter('name_title')
+    def format_name(name: str) -> str:
+        return name.upper()

@@ -9,7 +9,7 @@
                 <div class="res_list">
                     {% for r in restaurants %}
                     <article class="res_item">
-                        <div>
+                        <div class="outlined">
                             <div class="res_destination"> {{r.Name}} </div>
 
                             {% if r.location %}
@@ -29,13 +29,14 @@
                                 Cuisine: {{ r.Cuisine }}
                             </div>
                             {% endif %}
+                            <div style="display: flex; gap:0.5rem; align-items: center;">
+                                <a href="{{url_for('restaurant', restaurant_id = r.RID)}}" class="welcome_page button" style="padding:0.4rem 0.8rem;">
+                                    View Page
+                                </a>    
+                            </div>
                         </div>
-                        <div style="display: flex; gap:0.5rem; align-items: center;">
-                            <a href="{{url_for('restaurant', restaurant_id = r.RID)}}" class="welcome_page button" style="padding:0.4rem 0.8rem;">
-                                View Page
-                            </a>
-                            
-                        </div>
+                        
+                        <br>
                     </article>
                     {% endfor %}
                 </div>

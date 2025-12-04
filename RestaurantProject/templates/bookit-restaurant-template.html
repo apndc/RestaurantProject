@@ -38,8 +38,54 @@
                 {% endfor %}
             </div>
         </section>
+
+        <!-- Reservation Section -->
+        <section class="reservation-section">
+            <button id="reserveBtn" class="reserve-button">Make Reservation</button>
+
+            <div id="reservationForm" class="reservation-form" style="display:none;">
+                <h3>Reservation Information</h3>
+
+                <!-- Sends only RID and user enters the rest -->
+                <form action="{{ url_for('reservation') }}" method="POST">
+
+                    <!-- Hidden restaurant ID -->
+                    <input type="hidden" name="RID" value="{{ restaurant.RID }}">
+
+                    <!-- Date -->
+                    <label>Reservation Date:</label>
+                    <input type="date" name="date" required>
+
+                    <!-- Time -->
+                    <label>Reservation Time:</label>
+                    <input type="time" name="time" required>
+
+                    <!-- Guests -->
+                    <label>Number of Guests:</label>
+                    <input type="number" name="guests" min="1" max="20" required>
+
+                    <!-- Special Occasion -->
+                    <label>Special Event (optional):</label>
+                    <input type="text" name="event" placeholder="Birthday, anniversary, etc.">
+
+                    <!-- Special Requests -->
+                    <label>Special Accommodations (optional):</label>
+                    <textarea name="accommodations"
+                        placeholder="Allergies, wheelchair access, high chair, etc."></textarea>
+
+                    <button type="submit">Submit Reservation</button>
+                </form>
+            </div>
+        </section>
+
         <section class="backButton">
             <a href="/restaurant"><button style="text-align: center;">Return To Restaurant View</button></a>
         </section>
     </div>
+<script>
+document.getElementById("reserveBtn").addEventListener("click", function () {
+    let form = document.getElementById("reservationForm");
+    form.style.display = (form.style.display === "none") ? "block" : "none";
+});
+</script>
 {% endblock %}

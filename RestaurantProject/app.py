@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, url_for, redirect, session, g, flash
 import os, bcrypt, logging, requests
-from sqlalchemy import func
+from sqlalchemy import func, asc
 from sqlalchemy.orm import joinedload
 from dotenv import load_dotenv
 from db.server import get_session
@@ -67,7 +67,6 @@ def owner_required(f):
         return f(*args, **kwargs)
     return wrapper
 
-
 def customer_required(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
@@ -78,7 +77,6 @@ def customer_required(f):
         return f(*args, **kwargs)
     return wrapper
 
-
 def event_required(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
@@ -88,7 +86,6 @@ def event_required(f):
             return redirect(url_for("dashboard"))
         return f(*args, **kwargs)
     return wrapper
-
 
 def get_distance_miles(origin, destinations):
     """
@@ -294,7 +291,7 @@ def create_app():
 
 
     # Delete current logged-in user
-    @app.route('/delete')
+    @app.route('/delete', methods=['GET','POST'])
     @login_required
     def delete():
         
@@ -354,7 +351,10 @@ def create_app():
     @app.route('/landing')
     @login_required
     @customer_required
-    def user_landing():
+    def landing():
+        if "UserID" not in session:
+            return redirect(url_for("login"))
+
         db = get_session()
 
         try: 
@@ -415,6 +415,8 @@ def create_app():
                 upcoming=upcoming,
                 event_planners=event_planners  # Added For Event Planner reservation
             )
+            .all()
+        )
 
         finally:
             db.close()
@@ -513,7 +515,7 @@ def create_app():
         elif role == 'restaurant_owner':
             return redirect(url_for('owner_landing'))
         else:
-            return redirect(url_for('user_landing'))
+            return redirect(url_for('landing'))
 
             
     # logout function for username on landing page
@@ -656,25 +658,25 @@ def create_app():
     @app.route('/reservation', methods=['GET', 'POST'])
     @login_required
     def reservation():
-        if request.method == 'POST':
-            # Access form data
-            name = request.form.get('name')
-            phone = request.form.get('phone')
-            email = request.form.get('email')
-            special = request.form.get('special')
-            card_number = request.form.get('cardNumber')
-            name_on_card = request.form.get('nameOnCard')
-            exp_date = request.form.get('expDate')
-            cvv = request.form.get('cvv')
-            updates = request.form.get('updates')
+        if "UserID" not in session:
+            return redirect(url_for('login'))
 
-            # Here you can save to a database or process the reservation
-            print(f"Reservation from {name}, phone {phone}, email {email}, special: {special}, updates: {updates}")
+        db = get_session()
 
-            return "Reservation submitted!"  # Or redirect to a confirmation page
+        new_reservation = Reservation(
+            UserID=session["UserID"],           # ← YES, saved here
+            RID=request.form["RID"],
+            ReservationDate=request.form["date"],
+            ReservationTime=request.form["time"],
+            NumberOfGuests=request.form["guests"],
+            SpecialOccasion=request.form.get("event"),
+            SpecialRequests=request.form.get("accommodations")
+        )
 
-        # GET request: render the reservation page
-        return render_template('bookit-reservepage.html')
+        db.add(new_reservation)
+        db.commit()
+
+        return redirect(url_for("dashboard"))
 
     # Profile Page
     @app.route('/profile')
@@ -736,11 +738,52 @@ def create_app():
                         Capacity=capacity,
                         Fee=fee
                     )
-                    insert(new_restaurant)
+                    restaurant = insert(new_restaurant)
                     message = "Restaurant added successfully!"
             except Exception as e:
                 logging.error(f"Error adding restaurant: {e}")
                 error = "An error occurred while adding the restaurant."
+            
+            menu_items = []
+
+            if restaurant and valid_location:
+                # Get all Item Properties 
+                item_names = request.form.getlist('item_name[]')
+                item_prices = request.form.getlist('item_price[]')
+                item_categories = request.form.getlist('item_category[]')
+                item_descriptions = request.form.getlist('item_description[]')
+                
+                # Validation + Sanitization
+                for i, (name, price, category, desc) in enumerate(
+                    zip(item_names, item_prices, item_categories, item_descriptions),
+                    start=1
+                ):
+                    name = name.strip()
+                    price = price.strip()
+                    category = category.strip()
+                    desc = desc.strip()
+
+                    try:
+                        price_val = float(price)
+                        if price_val < 0:
+                            raise ValueError(f"Item {i}: price must be non-negative.")
+                    except ValueError:
+                        raise ValueError(f"Item {i}: price must be a valid number.")
+
+                    menu_items.append({
+                        "ItemName": name,
+                        "Price": price_val,
+                        "Category": category,
+                        "Description": desc
+                    })
+
+                # Insert All Items
+                for item in menu_items:
+                    insert(Menu(RID=restaurant.RID, **item))
+
+                message = "Success!"
+                return redirect(url_for('owner_landing'))
+
         return render_template("bookit-restaurant-form.html", error=error, message=message, cuisines=cuisine_list)
 
     # TESTING STUFF DELETE LATER
