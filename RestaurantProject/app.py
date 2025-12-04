@@ -280,7 +280,7 @@ def create_app():
         return render_template('createaccount.html', error=error)
 
     # Delete current logged-in user
-    @app.route('/delete')
+    @app.route('/delete', methods=['GET','POST'])
     @login_required
     def delete():
         
@@ -557,11 +557,52 @@ def create_app():
                         Capacity=capacity,
                         Fee=fee
                     )
-                    insert(new_restaurant)
+                    restaurant = insert(new_restaurant)
                     message = "Restaurant added successfully!"
             except Exception as e:
                 logging.error(f"Error adding restaurant: {e}")
                 error = "An error occurred while adding the restaurant."
+            
+            menu_items = []
+
+            if restaurant and valid_location:
+                # Get all Item Properties 
+                item_names = request.form.getlist('item_name[]')
+                item_prices = request.form.getlist('item_price[]')
+                item_categories = request.form.getlist('item_category[]')
+                item_descriptions = request.form.getlist('item_description[]')
+                
+                # Validation + Sanitization
+                for i, (name, price, category, desc) in enumerate(
+                    zip(item_names, item_prices, item_categories, item_descriptions),
+                    start=1
+                ):
+                    name = name.strip()
+                    price = price.strip()
+                    category = category.strip()
+                    desc = desc.strip()
+
+                    try:
+                        price_val = float(price)
+                        if price_val < 0:
+                            raise ValueError(f"Item {i}: price must be non-negative.")
+                    except ValueError:
+                        raise ValueError(f"Item {i}: price must be a valid number.")
+
+                    menu_items.append({
+                        "ItemName": name,
+                        "Price": price_val,
+                        "Category": category,
+                        "Description": desc
+                    })
+
+                # Insert All Items
+                for item in menu_items:
+                    insert(Menu(RID=restaurant.RID, **item))
+
+                message = "Success!"
+                return redirect(url_for('owner_landing'))
+
         return render_template("bookit-restaurant-form.html", error=error, message=message, cuisines=cuisine_list)
 
     # TESTING STUFF DELETE LATER
