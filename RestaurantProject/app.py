@@ -255,13 +255,13 @@ def create_app():
 
             # --- Verification Checks ---
             if role == "EVENT_PLANNER":
-                code_entered = request.form.get("verification_code", "").strip()
+                code_entered = request.form.get("verification_code", "").strip().upper()
                 ep_row = get_one(EP_Verification, verification_code=code_entered)
                 if not ep_row:
                     return render_template("createaccount.html", error="Invalid Event Planner verification code")
 
             elif role == "RESTAURANT_OWNER":
-                code_entered = request.form.get("verification_code", "").strip()
+                code_entered = request.form.get("verification_code", "").strip().upper()
                 ro_row = get_one(RO_Verification, verification_code=code_entered)
                 if not ro_row:
                     return render_template("createaccount.html", error="Invalid Restaurant Owner verification code")
