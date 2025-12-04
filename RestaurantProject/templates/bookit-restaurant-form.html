@@ -1,16 +1,17 @@
 {% extends "header.html" %}
 {% block title %}BookIt — Create Page{% endblock %}
 {% block content %}
-    <script src="formScript.js"></script>
+    <script src="{{ url_for('static', filename='formScript.js') }}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <!-- Fields are UserID, LocationID, Name, Description PhoneNumber, Cuisine, Capacity, Fee -->
     <div class="restaurant-card">
-        <h1>Create a New Restaurant</h1>   
+        <h1 id="createTitle">Create a New Restaurant</h1>   
         <form method="POST" action="/restaurantform">
             <label for="Name">Restaurant Name:</label><br>
             <input type="text" id="Name" name="Name" required><br><br>
 
             <label for="Description">Description:</label><br>
-            <textarea id="Description" name="Description" rows="4" cols="50" required></textarea><br><br>
+            <textarea id="Description" class="Desciptions" name="Description" rows="4" cols="50" required></textarea><br><br>
 
             <label for="StreetName">Street Name:</label><br>
             <input type="text" id="StreetName" name="StreetName" required><br><br>
@@ -46,9 +47,11 @@
 
                     <label>Item Name</label>
                     <input type="text" name="item_name[]" required>
+                    <br><br>
 
                     <label>Price</label>
                     <input type="number" name="item_price[]" step="0.01" min="0" required>
+                    <br><br>    
 
                     <label>Category</label>
                     <select name="item_category[]" required>
@@ -58,14 +61,17 @@
                         <option value="Dessert">Dessert</option>
                         <option value="Drinks">Drinks</option>
                     </select>
+                    <br><br> 
 
-                    <label>Description</label>
-                    <textarea name="item_description[]" rows="2"></textarea>
+                    <label>Description</label><br>
+                    <textarea name="item_description[]" class="Descriptions" rows="2"></textarea>
+                    <br><br> 
                 </div>
             </div>
             
             <div>
                 <button type="button" onclick="addItem()">Add Item</button> 
+                <button type="button" class="removeButton" onclick="removeItem()">Remove Item</button>
                 <input type="submit" value="Create Restaurant">
             </div>
         </form>
