@@ -554,13 +554,32 @@ def create_app():
         # Include location in template context
         return render_template('edit_account.html', user=user, location=location)
 
-    # General Events Page
+    # General Event Planner Dashboard
     @app.route('/event')
     @login_required
-    @event_required
+    @event_required  # or @event_planner_required if you have a decorator
     def eventpage():
-        
-        return render_template('bookit-eventpage.html', api_key=api_key)
+        db = get_session()
+        try:
+            # Fetch all upcoming customers assigned to this EP
+            customers = (
+                db.query(EP_Reservation)
+                .filter(
+                    EP_Reservation.EPID == session['UserID'],
+                    EP_Reservation.DateTime >= datetime.utcnow()
+                )
+                .order_by(EP_Reservation.DateTime.asc())
+                .all()
+            )
+
+            return render_template(
+                'bookit-eventpage.html',
+                api_key=api_key,
+                customers=customers
+            )
+        finally:
+            db.close()
+
 
     # Event Page
     @app.route('/event/<int:event_id>')

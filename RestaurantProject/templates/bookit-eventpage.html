@@ -44,56 +44,74 @@
   </div>
 </div>
 
-  <main>
-    <section class="calendar">
-      <h3>Calendar View</h3>
-      <div class="calendar-controls">
-        <button onclick="switchView('week')">Week</button>
-        <button onclick="switchView('month')">Month</button>
-      </div>
-      <div class="calendar-grid" id="calendarGrid"></div>
-    </section>
-
-    <section class="customers">
-      <h3>Upcoming Customers</h3>
-      <ul>
-        <!-- Customer list here -->
-      </ul>
-    </section>
-
-    <section class="checklist">
-      <h3>Checklist</h3>
-      <input type="text" id="newTask" placeholder="Add a task..." />
-      <button onclick="addTask()">Add</button>
-      <ul id="taskList"></ul>
-    </section>
-
-    <section class="venues">
-      <h3>Map of Large Venues</h3>
-      <input type="text" id="venueSearch" placeholder="Search for event venues..." />
-      <button onclick="searchVenue()">Search</button>
-      <div id="map"></div>
-    </section>
-
-    <section class="restaurants">
-      <h3>Top Rated Restaurants</h3>
-      <ul>
-        <li><a onclick="openModal('The Grand Table', 'grand@table.com')">The Grand Table</a></li>
-        <li><a onclick="openModal('Riverside Bistro', 'owner@riverside.com')">Riverside Bistro</a></li>
-        <li><a onclick="openModal('Skyline Banquets', 'skyline@banquets.com')">Skyline Banquets</a></li>
-      </ul>
-    </section>
-  </main>
-
-  <footer><a href="#">Report a Problem</a></footer>
-
-  <div class="modal" id="modal">
-    <div class="modal-content">
-      <h4 id="modalName"></h4>
-      <p>Contact: <span id="modalEmail"></span></p>
-      <button onclick="closeModal()">Close</button>
+<main>
+  <!-- Calendar Section -->
+  <section class="calendar">
+    <h3>Calendar View</h3>
+    <div class="calendar-controls">
+      <button onclick="switchView('week')">Week</button>
+      <button onclick="switchView('month')">Month</button>
     </div>
+    <div class="calendar-grid" id="calendarGrid"></div>
+  </section>
+
+  <!-- Upcoming Customers -->
+  <section class="customers">
+    <h3>Upcoming Customers</h3>
+    {% if customers and customers|length %}
+      <ul>
+        {% for c in customers %}
+          <li style="margin-bottom:10px; padding:8px; border:1px solid #ddd; border-radius:5px;">
+            <strong>{{ c.FirstName }} {{ c.LastName }}</strong><br>
+            Phone: {{ c.PhoneNumber }}<br>
+            Event Type: {{ c.EventType }}<br>
+            Guests: {{ c.Guests }}<br>
+            Date & Time: {{ c.DateTime.strftime("%a, %b %d, %I:%M %p") if c.DateTime else 'TBD' }}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>No upcoming customers assigned.</p>
+    {% endif %}
+  </section>
+
+  <!-- Checklist -->
+  <section class="checklist">
+    <h3>Checklist</h3>
+    <input type="text" id="newTask" placeholder="Add a task..." />
+    <button onclick="addTask()">Add</button>
+    <ul id="taskList"></ul>
+  </section>
+
+  <!-- Map Section -->
+  <section class="venues">
+    <h3>Map of Large Venues</h3>
+    <input type="text" id="venueSearch" placeholder="Search for event venues..." />
+    <button onclick="searchVenue()">Search</button>
+    <div id="map"></div>
+  </section>
+
+  <!-- Top Rated Restaurants -->
+  <section class="restaurants">
+    <h3>Top Rated Restaurants</h3>
+    <ul>
+      <li><a onclick="openModal('The Grand Table', 'grand@table.com')">The Grand Table</a></li>
+      <li><a onclick="openModal('Riverside Bistro', 'owner@riverside.com')">Riverside Bistro</a></li>
+      <li><a onclick="openModal('Skyline Banquets', 'skyline@banquets.com')">Skyline Banquets</a></li>
+    </ul>
+  </section>
+</main>
+
+<footer><a href="#">Report a Problem</a></footer>
+
+<!-- Customer Modal -->
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <h4 id="modalName"></h4>
+    <p>Contact: <span id="modalEmail"></span></p>
+    <button onclick="closeModal()">Close</button>
   </div>
+</div>
 
 <script>
 const userMenuBtn = document.getElementById('userMenuBtn');
@@ -103,7 +121,6 @@ userMenuBtn.addEventListener('click', () => {
   userDropdown.style.display = (userDropdown.style.display === 'block') ? 'none' : 'block';
 });
 
-// Close dropdown if clicked outside
 document.addEventListener('click', (e) => {
   if (!userMenuBtn.contains(e.target) && !userDropdown.contains(e.target)) {
     userDropdown.style.display = 'none';
@@ -123,6 +140,5 @@ cancelDelete.addEventListener('click', () => {
   deleteModal.style.display = 'none';
 });
 </script>
-
 </body>
 </html>
