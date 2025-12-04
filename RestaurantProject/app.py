@@ -356,70 +356,76 @@ def create_app():
             return redirect(url_for("login"))
 
         db = get_session()
-
-        try: 
-            upcoming = []
-            upcoming_ep = []
-            try:
-                # Restaurant Reservations
-                upcoming = (
-                    db.query(Reservation)
-                    .options(joinedload(Reservation.restaurant))
-                    .filter(
-                        Reservation.UserID == session['UserID'], 
-                        Reservation.DateTime >= datetime.utcnow()
-                    )
-                    .order_by(Reservation.DateTime.asc())
-                    .limit(5)
-                    .all()
-                )
-                
-                # Event Planner Reservations
-                upcoming_ep = (
-                    db.query(EP_Reservation)
-                    .filter(
-                        EP_Reservation.UserID == session['UserID'],
-                        EP_Reservation.DateTime >= datetime.utcnow()
-                    )
-                    .order_by(EP_Reservation.DateTime.asc())
-                    .limit(5)
-                    .all()
-                )
-
-            except Exception:
-                upcoming = []
-                upcoming_ep = []
-                
-            # Combine and sort both by Date and Time
-            all_upcoming = upcoming + upcoming_ep
-            
-            all_upcoming = sorted(
-                upcoming + upcoming_ep,
-                key=lambda x: x.DateTime
-            )
-            
-            all_upcoming = all_upcoming[:5] # <--- limit of 5 for beginning purposes
-
-            # Fetch event planners
-            event_planners = (
-                db.query(Account)
-                .filter(Account.Role == 'EVENT_PLANNER')
+        try:
+            # --- Restaurant Reservations ---
+            res_list = db.query(Reservation).options(joinedload(Reservation.restaurant))\
+                .filter(Reservation.UserID == session['UserID'])\
                 .all()
-            )
+
+            # Convert each Reservation to have a DateTime attribute for sorting
+            class TempRes:
+                def __init__(self, r):
+                    self.obj = r
+                    self.DateTime = datetime.combine(r.ReservationDate, r.ReservationTime)
+                def __getattr__(self, name):
+                    return getattr(self.obj, name)
+
+            upcoming_res = [TempRes(r) for r in res_list if datetime.combine(r.ReservationDate, r.ReservationTime) >= datetime.utcnow()]
+
+            # --- Event Planner Reservations ---
+            upcoming_ep = db.query(EP_Reservation)\
+                .filter(EP_Reservation.UserID == session['UserID'], EP_Reservation.DateTime >= datetime.utcnow())\
+                .all()
+
+            # Combine and sort
+            all_upcoming = sorted(upcoming_res + upcoming_ep, key=lambda r: r.DateTime)[:5]
+
+            # Event planners
+            event_planners = db.query(Account).filter(Account.Role == 'EVENT_PLANNER').all()
 
             return render_template(
                 'user_landing.html',
                 api_key=api_key,
                 user_name=session.get('user_name'),
                 cuisines=cuisine_list,
-                upcoming=upcoming,
-                event_planners=event_planners  # Added For Event Planner reservation
+                upcoming=all_upcoming,
+                event_planners=event_planners
             )
-            .all()
-        )
 
         finally:
             db.close()
+
+            
+    @app.route('/cancel_reservation/<string:type>/<int:id>', methods=['POST'])
+    @login_required
+    def cancel_reservation(type, id):
+        db = get_session()
+        try:
+            if type == "restaurant":
+                res = db.query(Reservation).filter_by(RID=id, UserID=session['UserID']).first()
+            elif type == "event":
+                res = db.query(EP_Reservation).filter_by(EPID=id, UserID=session['UserID']).first()
+            else:
+                flash("Invalid reservation type.", "error")
+                return redirect(url_for("landing"))
+
+            if not res:
+                flash("Reservation not found.", "error")
+                return redirect(url_for("landing"))
+
+            db.delete(res)
+            db.commit()
+            flash("Reservation cancelled successfully.", "success")
+
+        except Exception as e:
+            db.rollback()
+            flash(f"Could not cancel reservation: {str(e)}", "error")
+
+        finally:
+            db.close()
+
+        return redirect(url_for("landing"))
+
             
     @app.route('/select_event_planner', methods=['POST'])
     @login_required
@@ -459,47 +465,62 @@ def create_app():
     def create_event():
         db = get_session()
         try:
-            ep_id = request.form['ep_id']
-            first = request.form['FirstName'].strip()
-            last = request.form['LastName'].strip()
-            phone = request.form['PhoneNumber'].strip()
-            event_type = request.form['EventType'].strip()
-            guests = int(request.form.get('Guests', 0))  # safer
-            dt = datetime.fromisoformat(request.form['DateTime'])
+            # Get form data
+            ep_id = request.form.get('ep_id')
+            first_name = request.form.get('FirstName')
+            last_name = request.form.get('LastName')
+            phone = request.form.get('PhoneNumber')
+            event_type = request.form.get('EventType')
+            guests = request.form.get('Guests')
+            date_time_str = request.form.get('DateTime')
 
-            # Create EP Reservation record
+            # --- VALIDATION ---
+            if not all([ep_id, first_name, last_name, phone, event_type, guests, date_time_str]):
+                flash("All fields are required to schedule your event.", "error")
+                return redirect(url_for("landing"))
+
+            try:
+                date_time = datetime.fromisoformat(date_time_str)
+                if date_time < datetime.utcnow():
+                    flash("Event date and time must be in the future.", "error")
+                    return redirect(url_for("landing"))
+            except ValueError:
+                flash("Invalid date/time format.", "error")
+                return redirect(url_for("landing"))
+
+            try:
+                guests = int(guests)
+                if guests <= 0:
+                    flash("Number of guests must be at least 1.", "error")
+                    return redirect(url_for("landing"))
+            except ValueError:
+                flash("Number of guests must be a number.", "error")
+                return redirect(url_for("landing"))
+
+            # --- CREATE EVENT ---
             new_event = EP_Reservation(
                 UserID=session['UserID'],
                 EPID=ep_id,
-                FirstName=first,
-                LastName=last,
+                FirstName=first_name,
+                LastName=last_name,
                 PhoneNumber=phone,
                 EventType=event_type,
                 Guests=guests,
-                DateTime=dt
+                DateTime=date_time
             )
 
             db.add(new_event)
             db.commit()
-            
-            # Fetch the Event Planner's name
-            ep_user = db.query(Account).filter_by(UserID=ep_id).first()
-            ep_name = f"{ep_user.FirstName} {ep_user.LastName}" if ep_user else "your Event Planner"
-
-            # Flash personalized success message
-            flash(f"Event with {ep_name} scheduled successfully!", "success")
-
-            # Redirect to user landing page after success
-            return redirect(url_for('user_landing'))
+            flash("Your event has been scheduled successfully!", "success")
 
         except Exception as e:
-            db.rollback()  # undo any partial changes
-            logging.exception("Failed to create EP event")  # log error
-            return "Error creating event", 500  
+            db.rollback()
+            flash(f"Event could not be scheduled: {str(e)}", "error")
 
         finally:
             db.close()
 
+        return redirect(url_for("landing"))
 
     def redirect_dashboard():
 
