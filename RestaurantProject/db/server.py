@@ -16,7 +16,10 @@ Base = declarative_base()
 db_name = os.getenv('db_name')
 db_owner = os.getenv('db_owner')
 db_pass = os.getenv('db_pass')
-db_url = f"postgresql://{db_owner}:{db_pass}@localhost/{db_name}"
+db_host = os.getenv('db_host', 'localhost')
+db_port = os.getenv('db_port', '5432')
+
+db_url = f"postgresql://{db_owner}:{db_pass}@{db_host}:{db_port}/{db_name}"
 
 engine = create_engine(db_url)
 
