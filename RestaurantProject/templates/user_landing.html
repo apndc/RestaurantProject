@@ -2,55 +2,87 @@
 {% block title %}BookIt — Landing Page {% endblock %}
 {% block content %}
 
- <main>
+<main>
+
+   <!-- UPCOMING RESERVATIONS -->
    <section class="calendar">
        <h3>Upcoming Reservations</h3>
-
 
        {% if upcoming and upcoming|length %}
        <div class="res_list">
            {% for r in upcoming %}
                <div class="res_item">
+
+                   <!-- Date + Time -->
                    <div class="res_date">
-                       {{r.DateTime.strftime("%a, %b, %d * %I:%M %p") if r.DateTime else "TBD"}}
+                       {{ r.ReservationDate.strftime("%a, %b %d, %Y") }}
+                       at
+                       {{ r.ReservationTime.strftime("%I:%M %p") }}
                    </div>
+
+                   <!-- Restaurant -->
                    <div class="res_destination">
-                       {{r.restaurant.Name if r.restaurant else "Restaurant"}}
+                       {{ r.restaurant.Name if r.restaurant else "Restaurant" }}
                    </div>
+
+                   <!-- Party Size -->
                    <div class="res_size">
-                       Party: {{r.PartySize if r.PartySize else "N/A"}}
+                       Party Size: {{ r.NumberOfGuests }}
                    </div>
+
+                   <!-- Special Event (optional) -->
+                   {% if r.SpecialOccasion %}
+                   <div class="res_event">
+                       Event: {{ r.SpecialOccasion }}
+                   </div>
+                   {% endif %}
+
+                   <!-- Special Requests (optional) -->
+                   {% if r.SpecialRequests %}
+                   <div class="res_requests">
+                       Requests: {{ r.SpecialRequests }}
+                   </div>
+                   {% endif %}
+
                </div>
-               {% endfor %}
+           {% endfor %}
        </div>
+
        {% else %}
-           <p style="margin:0.5rem 0;">No upcoming reservations <a href="{{ url_for('restaurant_page') }}">Find a table</a></p>
+           <p style="margin:0.5rem 0;">
+               No upcoming reservations
+               <a href="{{ url_for('restaurant_page') }}">Find a table</a>
+           </p>
+       {% endif %}
    </section>
 
 
+   <!-- BROWSE BY CUISINE -->
    <section class="restaurants">
        <h3>Browse by Cuisine</h3>
        <div class="cuisine_grid">
            {% for c in cuisines %}
-               <a class="cuisine_card" href="{{url_for('restaurant_page')}}?cuisine={{ c }}">
+               <a class="cuisine_card" href="{{ url_for('restaurant_page') }}?cuisine={{ c }}">
                    <div class="cusine_name">{{ c }}</div>
                </a>
-               {% endfor %}
+           {% endfor %}
        </div>
    </section>
 
 
+   <!-- POPULAR NEARBY -->
    <section class="venues">
        <h3>Popular Nearby</h3>
-       <p> Use <em>Browse by Cuisine</em> to filter, or view <a href="{{ url_for('restaurant_page') }}">all</a></p>
-    {% endif %}
+       <p>
+           Use <em>Browse by Cuisine</em> to filter, or view
+           <a href="{{ url_for('restaurant_page') }}">all</a>
+       </p>
    </section>
-  
- </main>
 
+</main>
 
- <footer>
+<footer>
    <a href="#">Report a Problem</a>
- </footer>
+</footer>
 
 {% endblock %}

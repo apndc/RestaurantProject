@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, url_for, redirect, session, g
 import os, bcrypt, logging, requests
-from sqlalchemy import func
+from sqlalchemy import func, asc
 from sqlalchemy.orm import joinedload
 from dotenv import load_dotenv
 from db.server import get_session
@@ -52,7 +52,7 @@ def guest_required(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
         if session.get("UserID"):
-            return redirect(url_for("user_landing"))
+            return redirect(url_for("dashboard"))
         return f(*args, **kwargs)
     return wrapper
 
@@ -66,7 +66,6 @@ def owner_required(f):
         return f(*args, **kwargs)
     return wrapper
 
-
 def customer_required(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
@@ -77,7 +76,6 @@ def customer_required(f):
         return f(*args, **kwargs)
     return wrapper
 
-
 def event_required(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
@@ -87,7 +85,6 @@ def event_required(f):
             return redirect(url_for("dashboard"))
         return f(*args, **kwargs)
     return wrapper
-
 
 def get_distance_miles(origin, destinations):
     """
@@ -269,7 +266,8 @@ def create_app():
                 
                 # Clear all Cookies and Add Account ID to Session
                 session.clear()
-                session.permanent = True
+                session.permanent = False
+                # session.permanent = True
                 session['UserID'] = newUser.UserID
                 
                 # Additional Logging Info
@@ -335,25 +333,22 @@ def create_app():
     @app.route('/landing')
     @login_required
     @customer_required
-    def user_landing():
+    def landing():
+        if "UserID" not in session:
+            return redirect(url_for("login"))
+
         db = get_session()
 
-        try: 
-            upcoming = []
-            try:
-                upcoming = (
-                    db.query(Reservation).options(joinedload(Reservation.restaurant)).filter(Reservation.UserID == session['UserID'], Reservation.Date >= datetime.now())
-                    .order_by(Reservation.Date.asc()).limit(5).all()
-                )
-            except Exception:
-                upcoming = []
-            
-            return render_template(
-                'user_landing.html', api_key=api_key, cuisines = cuisine_list, upcoming = upcoming
+        upcoming = (
+            db.query(Reservation)
+            .filter(Reservation.UserID == session["UserID"])
+            .order_by(
+                asc(getattr(Reservation, "ReservationDate"))
             )
+            .all()
+        )
 
-        finally:
-            db.close()
+        return render_template("user_landing.html", upcoming=upcoming)
 
     def redirect_dashboard():
 
@@ -369,7 +364,7 @@ def create_app():
         elif role == 'restaurant_owner':
             return redirect(url_for('owner_landing'))
         else:
-            return redirect(url_for('user_landing'))
+            return redirect(url_for('landing'))
 
             
     # logout function for username on landing page
@@ -482,25 +477,25 @@ def create_app():
     @app.route('/reservation', methods=['GET', 'POST'])
     @login_required
     def reservation():
-        if request.method == 'POST':
-            # Access form data
-            name = request.form.get('name')
-            phone = request.form.get('phone')
-            email = request.form.get('email')
-            special = request.form.get('special')
-            card_number = request.form.get('cardNumber')
-            name_on_card = request.form.get('nameOnCard')
-            exp_date = request.form.get('expDate')
-            cvv = request.form.get('cvv')
-            updates = request.form.get('updates')
+        if "UserID" not in session:
+            return redirect(url_for('login'))
 
-            # Here you can save to a database or process the reservation
-            print(f"Reservation from {name}, phone {phone}, email {email}, special: {special}, updates: {updates}")
+        db = get_session()
 
-            return "Reservation submitted!"  # Or redirect to a confirmation page
+        new_reservation = Reservation(
+            UserID=session["UserID"],           # ← YES, saved here
+            RID=request.form["RID"],
+            ReservationDate=request.form["date"],
+            ReservationTime=request.form["time"],
+            NumberOfGuests=request.form["guests"],
+            SpecialOccasion=request.form.get("event"),
+            SpecialRequests=request.form.get("accommodations")
+        )
 
-        # GET request: render the reservation page
-        return render_template('bookit-reservepage.html')
+        db.add(new_reservation)
+        db.commit()
+
+        return redirect(url_for("dashboard"))
 
     # Profile Page
     @app.route('/profile')
