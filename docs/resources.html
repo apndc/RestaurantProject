@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>3. Requirements &#8212; BookIt Restaurant Management Application 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8e8a900e" />
+      <link rel="stylesheet" type="text/css" href="_static/css/pdj.css?v=4abe0d83" />
+
+<link rel="stylesheet" href="_static/css/darker.css" type="text/css"
+      media="(prefers-color-scheme: dark)"/>
+    <link href='https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'/>
+    <script src="_static/documentation_options.js?v=8d563738"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/pdj.js"></script>
+
+    <script type="module" src="_static/js/dark-mode-toggle.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="5. Troubleshooting" href="troubleshooting.html" />
+    <link rel="prev" title="2. Development" href="development.html" /> 
+  </head>  <body class="wy-body-for-nav" role="document"> 
+<div class="menu-overlay"></div>
+<section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+  <nav class="wy-nav-top" id="barra-mobile" role="navigation" aria-label="top navigation">
+    <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+    <a href="#">BookIt Restaurant Management Application </a>
+  </nav>
+
+  <div class="wy-nav-content">
+    <div class="fundo-claro">
+    </div>
+    <div class="fundo-escuro">
+    </div>
+
+    <div class="rst-content">
+      <div role="navigation" aria-label="breadcrumbs navigation">
+      </div>
+      <div class="">
+
+	
+	<div id="content" class="hfeed entry-container hentry">
+      	  <div id="dark-mode-toggle-container">
+	    <dark-mode-toggle appearance="toggle" class="slider" dark="" light="">
+	    </dark-mode-toggle>
+	  </div>
+	  <div role="main">
+  <section id="requirements">
+<span id="resources"></span><h1><span class="section-number">3. </span>Requirements<a class="headerlink" href="#requirements" title="Link to this heading">¶</a></h1>
+</section>
+<section id="id1">
+<h1><span class="section-number">4. </span>Resources<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h1>
+<p>This section describes modules, classes, and functions private to the BookIt application.
+It is intended to document how the application works internally.</p>
+<section id="app-py">
+<h2><span class="section-number">4.1. </span>app.py<a class="headerlink" href="#app-py" title="Link to this heading">¶</a></h2>
+<p>Initializes Flask app, configures routes, manages app decorators, and handles user sessions and cookies.</p>
+</section>
+<section id="db-schema">
+<h2><span class="section-number">4.2. </span>db.schema<a class="headerlink" href="#db-schema" title="Link to this heading">¶</a></h2>
+<p>Contains SQLAlchemy ORM models:</p>
+<ul class="simple">
+<li><p>Account</p></li>
+<li><p>Location</p></li>
+<li><p>RestaurantInfo</p></li>
+<li><p>Menu</p></li>
+<li><p>CardInfo (not yet implemented)</p></li>
+<li><p>Events</p></li>
+<li><p>EP_Verification</p></li>
+<li><p>EP_Reservation</p></li>
+<li><p>RO_Verification</p></li>
+<li><p>Reservation</p></li>
+</ul>
+<p>Defines database table structure and relationships used throughout the application.</p>
+</section>
+<section id="db-query">
+<h2><span class="section-number">4.3. </span>db.query<a class="headerlink" href="#db-query" title="Link to this heading">¶</a></h2>
+<p>Creates the database engine and session factory. Provides:</p>
+<ul class="simple">
+<li><p>insert(): inserts and commits records to the database</p></li>
+<li><p>get_one(): retrieves a single record based on filters</p></li>
+<li><p>get_all(): retrieves multiple records based on filters</p></li>
+<li><p>delete_one(): deletes a single record based on filters</p></li>
+</ul>
+</section>
+<section id="db-server">
+<h2><span class="section-number">4.4. </span>db.server<a class="headerlink" href="#db-server" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>get_session(): returns a single SQLAlchemy session</p></li>
+<li><p>init_database(): Initialize database tables</p></li>
+</ul>
+</section>
+<section id="templates">
+<h2><span class="section-number">4.5. </span>templates/<a class="headerlink" href="#templates" title="Link to this heading">¶</a></h2>
+<p>Jinja2 templates and other HTML files used to render web pages for the application.</p>
+</section>
+<section id="static">
+<h2><span class="section-number">4.6. </span>static/<a class="headerlink" href="#static" title="Link to this heading">¶</a></h2>
+<p>Static files including CSS, JS Scripts, and other Assets used in the application.</p>
+</section>
+<section id="docs">
+<h2><span class="section-number">4.7. </span>docs/<a class="headerlink" href="#docs" title="Link to this heading">¶</a></h2>
+<p>Documentation files for the project including Sphinx configuration and reStructuredText files.</p>
+</section>
+<section id="logs">
+<h2><span class="section-number">4.8. </span>logs/<a class="headerlink" href="#logs" title="Link to this heading">¶</a></h2>
+<p>Application log files for debugging and monitoring.
+(Not included in Git versions but is created on App launch)</p>
+</section>
+<section id="tests">
+<h2><span class="section-number">4.9. </span>tests/<a class="headerlink" href="#tests" title="Link to this heading">¶</a></h2>
+<p>Unit tests written with pytest.
+Covers:</p>
+<ul class="simple">
+<li><p>Validate Signup Form Inputs</p></li>
+<li><p>Validate Login Logic</p></li>
+<li><p>Tests That Ensure Pages Load Properly</p></li>
+</ul>
+</section>
+</section>
+
+
+	  </div>
+	</div>
+      </div>
+      
+      
+      <footer>
+  
+  <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+    
+    <a href="troubleshooting.html" class="btn btn-neutral float-right" title="5. Troubleshooting">Next <span class="fa fa-arrow-circle-right"></span></a>
+    
+    
+    <a href="development.html" class="btn btn-neutral" title="2. Development"><span class="fa fa-arrow-circle-left"></span>Previous</a>
+    
+  </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+      &copy; Copyright 2025, BookIt.
+    </p>
+  </div>
+
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/jucacrispim/sphinx_pdj_theme">theme</a> provided by <a href="https://poraodojuca.dev">Porão do Juca</a>.
+
+</footer>
+      
+
+      <div class="clearer"></div>
+    </div>
+  </div>
+
+</section>
+
+<nav data-toggle="wy-nav-shift" class="wy-nav-side">
+  <div class="wy-side-nav-search">
+    
+    <a href="index.html" class="fa fa-home"> BookIt Restaurant Management Application </a>
+    
+    
+    <div role="search">
+      
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+      
+    </div>
+  </div>
+
+  <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+    
+
+    
+      
+      
+	  <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">1. Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="development.html">2. Development</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="development.html#code-of-conduct">2.1. Code of Conduct</a></li>
+<li class="toctree-l2"><a class="reference internal" href="development.html#repository">2.2. Repository</a></li>
+<li class="toctree-l2"><a class="reference internal" href="development.html#development-environment">2.3. Development Environment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="development.html#pytest">2.4. Pytest</a></li>
+<li class="toctree-l2"><a class="reference internal" href="development.html#build-documentation">2.5. Build Documentation</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">3. Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#id1">4. Resources</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#app-py">4.1. app.py</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#db-schema">4.2. db.schema</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#db-query">4.3. db.query</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#db-server">4.4. db.server</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#templates">4.5. templates/</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#static">4.6. static/</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#docs">4.7. docs/</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#logs">4.8. logs/</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#tests">4.9. tests/</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="troubleshooting.html">5. Troubleshooting</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="troubleshooting.html#issue-1">5.1. Issue #1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="troubleshooting.html#issue-2">5.2. Issue #2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="troubleshooting.html#issue-3">5.3. Issue #3</a></li>
+</ul>
+</li>
+</ul>
+
+      
+    
+  
+  
+  <div>
+    <h3><a href="index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">3. Requirements</a></li>
+<li><a class="reference internal" href="#id1">4. Resources</a><ul>
+<li><a class="reference internal" href="#app-py">4.1. app.py</a></li>
+<li><a class="reference internal" href="#db-schema">4.2. db.schema</a></li>
+<li><a class="reference internal" href="#db-query">4.3. db.query</a></li>
+<li><a class="reference internal" href="#db-server">4.4. db.server</a></li>
+<li><a class="reference internal" href="#templates">4.5. templates/</a></li>
+<li><a class="reference internal" href="#static">4.6. static/</a></li>
+<li><a class="reference internal" href="#docs">4.7. docs/</a></li>
+<li><a class="reference internal" href="#logs">4.8. logs/</a></li>
+<li><a class="reference internal" href="#tests">4.9. tests/</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  
+  
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="development.html"
+                          title="previous chapter"><span class="section-number">2. </span>Development</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="troubleshooting.html"
+                          title="next chapter"><span class="section-number">5. </span>Troubleshooting</a></p>
+  </div>
+  
+  
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/resources.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+  
+  
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+  
+
+  </div>
+
+  &nbsp;
+</nav>
+
+  </body>
+</html>
