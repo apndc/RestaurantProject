@@ -359,7 +359,9 @@ def create_app():
 
         try: 
             upcoming = []
+            upcoming_ep = []
             try:
+                # Restaurant Reservations
                 upcoming = (
                     db.query(Reservation)
                     .options(joinedload(Reservation.restaurant))
@@ -371,8 +373,30 @@ def create_app():
                     .limit(5)
                     .all()
                 )
+                
+                # Event Planner Reservations
+                upcoming_ep = (
+                    db.query(EP_Reservation)
+                    .filter(
+                        EP_Reservation.UserID == session['UserID'],
+                        EP_Reservation.DateTime >= datetime.utcnow()
+                    )
+                    .order_by(EP_Reservation.DateTime.asc())
+                    .limit(5)
+                    .all()
+                )
+
             except Exception:
                 upcoming = []
+                upcoming_ep = []
+                
+            # Combine and sort both by Date and Time
+            all_upcoming = sorted(
+                upcoming + upcoming_ep,
+                key=lambda x: x.DateTime
+            )
+            
+            all_upcoming = all_upcoming[:5] # <--- limit of 5 for beginning purposes
 
             # Fetch event planners
             event_planners = (
@@ -453,6 +477,13 @@ def create_app():
 
             db.add(new_event)
             db.commit()
+            
+            # Fetch the Event Planner's name
+            ep_user = db.query(Account).filter_by(UserID=ep_id).first()
+            ep_name = f"{ep_user.FirstName} {ep_user.LastName}" if ep_user else "your Event Planner"
+
+            # Flash personalized success message
+            flash(f"Event with {ep_name} scheduled successfully!", "success")
 
             # Redirect to user landing page after success
             return redirect(url_for('user_landing'))
@@ -460,7 +491,7 @@ def create_app():
         except Exception as e:
             db.rollback()  # undo any partial changes
             logging.exception("Failed to create EP event")  # log error
-            return "Error creating event", 500  # or render a template with a message
+            return "Error creating event", 500  
 
         finally:
             db.close()
